@@ -1,4 +1,3 @@
-import { string } from "@oclif/parser/lib/flags";
 import { Framework } from "@vechain/connex-framework";
 import Axios from "axios";
 import { Contract } from "myvetools";
