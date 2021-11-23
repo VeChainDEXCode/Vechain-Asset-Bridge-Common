@@ -4,8 +4,8 @@ import { Entity, PrimaryColumn, Column, Index } from "typeorm";
 @Entity("bridgeTx")
 export class BridgeTxEntity{
 
-    @PrimaryColumn({name:"swapid"})
-    public swapid!:string;
+    @PrimaryColumn({name:"bridgetxid"})
+    public bridgetxid!:string;
 
     @Index()
     @Column({name:"chainname"})
@@ -58,7 +58,7 @@ export class BridgeTxEntity{
     public valid!:boolean;
 }
 
-export function swapID(chainName:string,chainId:string,blocknum:number,txid:string,clauseIndex:number,index:number,account:string,token:string):string {
+export function bridgeTxId(chainName:string,chainId:string,blocknum:number,txid:string,clauseIndex:number,index:number,account:string,token:string):string {
     let encode = Buffer.concat([
         Buffer.from(chainName),
         Buffer.from(chainId),

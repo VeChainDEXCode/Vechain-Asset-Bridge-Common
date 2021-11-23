@@ -2,7 +2,7 @@ import { Between, Equal, getManager, getRepository } from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BridgeSnapshoot } from "../utils/types/bridgeSnapshoot";
 import { BridgeTx } from "../utils/types/bridgeTx";
-import { swapID, BridgeTxEntity } from "./entities/bridgeTx.entity";
+import { bridgeTxId, BridgeTxEntity } from "./entities/bridgeTx.entity";
 
 export default class BridgeTxModel{
     constructor(env:any){
@@ -17,7 +17,7 @@ export default class BridgeTxModel{
             await getManager().transaction(async transactionalEntityManager => {
                 for(const swapTx of txs){
                     let entity = new BridgeTxEntity();
-                    entity.swapid = swapID(swapTx.chainName,swapTx.chainId,swapTx.blockNumber,swapTx.txid,swapTx.clauseIndex,swapTx.index,swapTx.account,swapTx.token);
+                    entity.bridgetxid = bridgeTxId(swapTx.chainName,swapTx.chainId,swapTx.blockNumber,swapTx.txid,swapTx.clauseIndex,swapTx.index,swapTx.account,swapTx.token);
                     entity.chainName = swapTx.chainName,
                     entity.chainId = swapTx.chainId,
                     entity.blockNumber = swapTx.blockNumber,

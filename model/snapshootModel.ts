@@ -2,6 +2,8 @@ import { getConnection, getManager, getRepository, SelectQueryBuilder } from "ty
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BridgeSnapshoot, ZeroRoot } from "../utils/types/bridgeSnapshoot";
 import { BridgeTx } from "../utils/types/bridgeTx";
+import { bridgeTxId } from "./entities/bridgeTx.entity";
+import { PackingLogEntity } from "./entities/packingLog.entity";
 import { SnapshootEntity } from "./entities/snapshoot.entity";
 
 export class SnapshootModel {
@@ -224,6 +226,67 @@ export class SnapshootModel {
                     await transactionalEntityManager.save(entity);
                 }
             });
+        } catch (error) {
+            result.error = error;
+        }
+        return result;
+    }
+
+    public async savePackingLog(root:string,txs:BridgeTx[]):Promise<ActionResult>{
+        let result = new ActionResult();
+        try {
+            await getManager().transaction(async transactionalEntityManager => {
+                for(const tx of txs){
+                    let entity = new PackingLogEntity();
+                    entity.logid = 0;
+                    entity.merkleRoot = root;
+                    entity.bridgetxid = bridgeTxId(tx.chainName,tx.chainId,tx.blockNumber,tx.txid,tx.clauseIndex,tx.index,tx.account,tx.token);
+                    entity.valid = true;
+                    await transactionalEntityManager.save(entity);
+                }
+            });
+        } catch (error) {
+            result.error = error;
+        }
+        return result;
+    }
+
+    public async deletePackingLog(root:string):Promise<ActionResult>{
+        let result = new ActionResult();
+
+        try {
+            await getConnection()
+            .createQueryBuilder()
+            .delete()
+            .from(PackingLogEntity)
+            .where("merkleRoot = :merkleRoot", { merkleRoot: root })
+            .execute();
+        } catch (error) {
+            result.error = error;
+        }
+
+        return result;
+    }
+
+    public async getLogByBridgeTxId(bridgeTxIds:string[]):Promise<ActionData<Array<{merkleRoot:string,bridgeTxId:string}>>>{
+        let result = new ActionData<Array<{merkleRoot:string,bridgeTxId:string}>>();
+        result.data = new Array();
+        try {
+            let txbatch = new Array<string>();
+            for(let i = 0; i < bridgeTxIds.length; i++){
+                txbatch.push(bridgeTxIds[i]);
+                if(txbatch.length < 10 && i != bridgeTxIds.length + 1){
+                    continue;
+                }
+                const datas = await getRepository(PackingLogEntity)
+                    .createQueryBuilder()
+                    .where("bridgetxid IN (:list)",{list:txbatch})
+                    .getMany();
+                for(const log of datas){
+                    result.data.push({merkleRoot:log.merkleRoot,bridgeTxId:log.bridgetxid});
+                }
+                txbatch = new Array();
+            }
         } catch (error) {
             result.error = error;
         }
