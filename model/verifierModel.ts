@@ -16,7 +16,8 @@ export default class VerifierModel {
                 let _new:Verifier = {
                     verifier:entity.verifier,
                     status:entity.status,
-                    update:entity.update
+                    update:entity.update,
+                    updateBlock:entity.updateBlock
                 }
                 result.data.push(_new);
             }
@@ -37,6 +38,7 @@ export default class VerifierModel {
                     entity.verifier = verifier.verifier;
                     entity.status = verifier.status;
                     entity.update = verifier.update;
+                    entity.updateBlock = verifier.updateBlock;
                     await transactionalEntityManager.save(entity);
                 }
             });
