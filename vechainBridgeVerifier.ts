@@ -86,10 +86,12 @@ export class VeChainBridgeVerifiterReader {
                 ]).order("asc").range({unit:"block",from:from,to:to}).apply(0,200);
 
                 for(const event of events){
-                    let verifier = {
+                    let verifier:Verifier = {
                         verifier:ThorDevKitEx.Bytes32ToAddress(event.topics[1]),
                         status:event.topics[2] == "0x0000000000000000000000000000000000000000000000000000000000000001" ? true : false,
-                        update:event.meta.blockNumber};
+                        update:event.meta.blockNumber,
+                        updateBlock:event.meta.blockID
+                    };
                     const index = result.data.findIndex(item =>{return item.verifier.toLowerCase() == verifier.verifier.toLowerCase()});
                     if(index == -1){
                         result.data.push(verifier);
