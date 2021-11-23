@@ -11,7 +11,9 @@ export default class VerifierModel {
 
         try {
             let data = await getRepository(VerifierEntity)
-                .find();
+                .createQueryBuilder()
+                .where("valid = true")
+                .getMany();
             for(const entity of data){
                 let _new:Verifier = {
                     verifier:entity.verifier,
@@ -39,6 +41,7 @@ export default class VerifierModel {
                     entity.status = verifier.status;
                     entity.update = verifier.update;
                     entity.updateBlock = verifier.updateBlock;
+                    entity.valid = true;
                     await transactionalEntityManager.save(entity);
                 }
             });
