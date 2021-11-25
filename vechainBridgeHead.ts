@@ -18,6 +18,9 @@ export class VeChainBridgeHead implements IBridgeHead {
         this.connex = this.env.connex;
         this.config = this.env.config;
         this.initV2EBridge();
+        this.axios = Axios.create({
+            baseURL: this.config.vechain.nodeHost
+        });
     }
 
     public async getSnapshoot(begin:number,end:number):Promise<ActionData<BridgeSnapshoot[]>>{
@@ -435,13 +438,9 @@ export class VeChainBridgeHead implements IBridgeHead {
                 value:"0",
                 data:this.tokensFunc.encode(addr)
             }
-            const response = await Axios({
-                url:this.config.vechain.nodeHost + `/accounts/*?revision=${blockNum}`,
-                method:"POST",
-                responseType:"json",
-                data:{
-                    clauses:[clause]
-                }});
+            const response = await this.axios.post(`/accounts/*?revision=${blockNum}`,{
+                clauses:[clause]});
+            
             const data =this.tokensFunc.decode(response.data[0].data);
             const token = new VIP180Token(addr,this.connex);
             const baseInfo = await token.baseInfo();
@@ -494,4 +493,5 @@ export class VeChainBridgeHead implements IBridgeHead {
     private TokenUpdatedEvent!:abi.Event;
     private BridgeLockChangeEvent!:abi.Event;
     private tokensFunc!:abi.Function;
+    private axios!: any;
 }
