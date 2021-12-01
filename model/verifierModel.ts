@@ -13,6 +13,7 @@ export default class VerifierModel {
             let data = await getRepository(VerifierEntity)
                 .createQueryBuilder()
                 .where("valid = true")
+                .andWhere("status = true")
                 .getMany();
             for(const entity of data){
                 let _new:Verifier = {

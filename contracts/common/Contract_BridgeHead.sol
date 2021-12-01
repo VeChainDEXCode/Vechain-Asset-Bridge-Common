@@ -28,7 +28,7 @@ contract BridgeHeadControl {
     event GovernanceUpdated(address indexed _addr);
     event GovLockChanged(bool indexed _status);
     event RewardChanged(uint16 indexed _reward);
-    event TokenUpdated(address indexed _token);
+    event TokenUpdated(address indexed _token,uint8 _type, address _target, uint256 _begin, uint256 _end);
 
     struct TokenInfo {
         uint8 tokentype;
@@ -68,7 +68,7 @@ contract BridgeHeadControl {
             info.begin = _begin;
             info.end = _end;
         }
-        emit TokenUpdated(_addr);
+        emit TokenUpdated(_addr,_type,_target,_begin,_end);
     }
 
     function tokenActivate(address _token) external view returns (bool) {
@@ -91,7 +91,7 @@ contract BridgeHeadControl {
              end:_end
         });
         tokens[_native] = _new;
-        emit TokenUpdated(_native);
+        emit TokenUpdated(_native,ORIGINTOKEN,_target,_begin,_end);
     }
 
     function lockByGov() external onlyGovernance {

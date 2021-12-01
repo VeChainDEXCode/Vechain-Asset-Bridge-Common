@@ -18,9 +18,6 @@ export class VeChainBridgeHead implements IBridgeHead {
         this.connex = this.env.connex;
         this.config = this.env.config;
         this.initV2EBridge();
-        this.axios = Axios.create({
-            baseURL: this.config.vechain.nodeHost
-        });
     }
 
     public async getSnapshoot(begin:number,end:number):Promise<ActionData<BridgeSnapshoot[]>>{
@@ -315,10 +312,7 @@ export class VeChainBridgeHead implements IBridgeHead {
                 ]).order("asc").range({unit:"block",from:from,to:to}).apply(0,200);
 
                 for(const event of events){
-                    const addr = ThorDevKitEx.Bytes32ToAddress(event.topics[1]);
-                    const updated = event.meta.blockNumber;
-                    const updatedBlock = event.meta.blockID;
-                    const tokenInfoResult = await this.getTokenInfo(addr,updated,updatedBlock);
+                    const tokenInfoResult = await this.getTokenInfo(event);
                     if(tokenInfoResult.error){
                         result.error = tokenInfoResult.error;
                         return result;
@@ -328,6 +322,9 @@ export class VeChainBridgeHead implements IBridgeHead {
                 block = to + 1;
             }
             for(const item of tokensMap){
+                if(item[1].symbol.toUpperCase() == "VVET"){
+                    item[1].nativeCoin = true;
+                }
                 result.data.push(item[1]);
             }
         } catch (error) {
@@ -429,22 +426,15 @@ export class VeChainBridgeHead implements IBridgeHead {
         return result;
     }
 
-    private async getTokenInfo(addr:string,blockNum:number,blockId:string):Promise<ActionData<TokenInfo>> {
+    private async getTokenInfo(event:Connex.Thor.Filter.Row<"event",{}>):Promise<ActionData<TokenInfo>> {
         let result = new ActionData<TokenInfo>();
 
         try {
-            const clause = {
-                to:this.config.vechain.contracts.v2eBridge,
-                value:"0",
-                data:this.tokensFunc.encode(addr)
-            }
-            const response = await this.axios.post(`/accounts/*?revision=${blockNum}`,{
-                clauses:[clause]});
-            
-            const data =this.tokensFunc.decode(response.data[0].data);
+            const addr = ThorDevKitEx.Bytes32ToAddress(event.topics[1]);
             const token = new VIP180Token(addr,this.connex);
             const baseInfo = await token.baseInfo();
-            
+            const decode = this.TokenUpdatedEvent.decode(event.data,event.topics);
+
             let tokenInfo:TokenInfo = {
                 tokenid:"",
                 chainName:this.config.vechain.chainName,
@@ -454,15 +444,15 @@ export class VeChainBridgeHead implements IBridgeHead {
                 decimals:baseInfo.decimals,
                 address:addr,
                 nativeCoin:false,
-                tokenType:String(data[0]),
+                tokenType:String(decode["_type"]),
                 targetTokenId:"",
-                begin:Number(data[2]),
-                end:Number(data[3]),
-                update:blockNum,
-                updateBlock:blockId
+                begin:Number(decode["_begin"]),
+                end:Number(decode["_end"]),
+                update:event.meta.blockNumber,
+                updateBlock:event.meta.blockID
             }
             tokenInfo.tokenid = tokenid(tokenInfo.chainName,tokenInfo.chainId,tokenInfo.address);
-            tokenInfo.targetTokenId = tokenid(this.config.ethereum.chainName,this.config.ethereum.chainId,String(data[1]))
+            tokenInfo.targetTokenId = tokenid(this.config.ethereum.chainName,this.config.ethereum.chainId,String(decode["_target"]))
             result.data = tokenInfo;
         } catch (error) {
             result.error = error;
