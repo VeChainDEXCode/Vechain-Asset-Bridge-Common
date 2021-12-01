@@ -142,7 +142,7 @@ export class EthereumBridgeVerifier extends EthereumBridgeVerifierReader{
             } else if(bestBlock - blockRef > this.config.ethereum.expiration) {
                 result.data = "expired";
             } else {
-                console.debug(`pending ${bestBlock - blockRef}/${this.config.ethereum.confirmHeight}`);
+                console.debug(`Ethereum Tx: ${txhash} pending ${bestBlock - blockRef}/${this.config.ethereum.confirmHeight}`);
                 result.data = "pendding";
             }
         } catch (error) {

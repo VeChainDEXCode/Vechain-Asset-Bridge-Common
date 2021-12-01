@@ -180,7 +180,7 @@ export class VeChainBridgeVerifiter extends VeChainBridgeVerifiterReader{
             } else if(bestBlock - blockRef > this.config.vechain.expiration) {
                 result.data = "expired";
             } else {
-                console.debug(`pending ${bestBlock - blockRef}/${this.config.vechain.confirmHeight}`);
+                console.debug(`VeChain Tx: ${txid} pending ${bestBlock - blockRef}/${this.config.vechain.confirmHeight}`);
                 result.data = "pendding";
             }
         } catch (error) {
