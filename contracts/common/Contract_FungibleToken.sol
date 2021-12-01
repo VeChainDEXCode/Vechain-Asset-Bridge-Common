@@ -12,13 +12,10 @@ contract FungibleToken is IToken{
     mapping (address => uint)                       public override balanceOf;
     mapping (address => mapping (address => uint))  public override allowance;
 
-    address public bridge;
-
-    constructor(string memory _name,string memory _symbol,uint8 _decimals,address _bridge) {
+    constructor(string memory _name,string memory _symbol,uint8 _decimals) {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
-        bridge = _bridge;
     }
 
     function transfer(address _to, uint256 _amount) external override returns(bool){
