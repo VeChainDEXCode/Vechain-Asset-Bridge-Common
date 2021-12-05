@@ -98,6 +98,9 @@ export class EthereumBridgeVerifier extends EthereumBridgeVerifierReader{
                 from:this.wallet.list[0].address,
                 gas:gas,
                 gasprice:gasprice
+            }).on("error",(error:Error) => {
+                console.warn(`ethereum lock tx error: ${error}`);
+                result.error = error;
             });
             result.data = receipt.transactionHash;
         } catch (error) {
@@ -119,7 +122,10 @@ export class EthereumBridgeVerifier extends EthereumBridgeVerifierReader{
                 from:this.wallet.list[0].address,
                 gas:gas,
                 gasprice:gasprice
-            });
+            }).on("error",(error:Error) => {
+                console.warn(`ethereum update tx error: ${error}`);
+                result.error = error;
+            });;
             result.data = receipt.transactionHash;
         } catch (error) {
             result.error = error;
@@ -127,8 +133,8 @@ export class EthereumBridgeVerifier extends EthereumBridgeVerifierReader{
         return result;
     }
 
-    public async checkTxStatus(txhash:string,blockRef:number):Promise<ActionData<"reverted"|"confirmed"|"expired"|"pendding">>{
-        let result = new ActionData<"reverted"|"confirmed"|"expired"|"pendding">();
+    public async checkTxStatus(txhash:string,blockRef:number):Promise<ActionData<"reverted"|"confirmed"|"expired"|"pending">>{
+        let result = new ActionData<"reverted"|"confirmed"|"expired"|"pending">();
         const bestBlock = await this.web3.eth.getBlockNumber();
 
         try {
@@ -143,7 +149,7 @@ export class EthereumBridgeVerifier extends EthereumBridgeVerifierReader{
                 result.data = "expired";
             } else {
                 console.debug(`Ethereum Tx: ${txhash} pending ${bestBlock - blockRef}/${this.config.ethereum.confirmHeight}`);
-                result.data = "pendding";
+                result.data = "pending";
             }
         } catch (error) {
             result.error = error;

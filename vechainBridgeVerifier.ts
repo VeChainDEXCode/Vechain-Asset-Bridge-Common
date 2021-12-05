@@ -165,8 +165,8 @@ export class VeChainBridgeVerifiter extends VeChainBridgeVerifiterReader{
         return result;
     }
 
-    public async checkTxStatus(txid:string,blockRef:number):Promise<ActionData<"reverted"|"confirmed"|"expired"|"pendding">>{
-        let result = new ActionData<"reverted"|"confirmed"|"expired"|"pendding">();
+    public async checkTxStatus(txid:string,blockRef:number):Promise<ActionData<"reverted"|"confirmed"|"expired"|"pending">>{
+        let result = new ActionData<"reverted"|"confirmed"|"expired"|"pending">();
         const bestBlock = (await this.connex.thor.block().get())!.number;
 
         try {
@@ -181,7 +181,7 @@ export class VeChainBridgeVerifiter extends VeChainBridgeVerifiterReader{
                 result.data = "expired";
             } else {
                 console.debug(`VeChain Tx: ${txid} pending ${bestBlock - blockRef}/${this.config.vechain.confirmHeight}`);
-                result.data = "pendding";
+                result.data = "pending";
             }
         } catch (error) {
             result.error = error;
