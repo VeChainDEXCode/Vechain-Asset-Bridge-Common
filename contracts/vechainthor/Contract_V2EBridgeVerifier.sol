@@ -17,10 +17,12 @@ contract BridgeVerifierControl {
     address public bridge;
     mapping(address => bool) public verifiers;
     uint8 public verifierCount;
+    uint8 public proposalExp = 3;
 
     event VerifierChanged(address indexed _verifier, bool indexed _status);
     event GovernanceUpdate(address indexed _addr);
     event BridgeUpdate(address indexed _addr);
+    event ProposalExpChanged(uint8 indexed _value);
 
     function setGovernance(address _addr) external onlyGovernance {
         governance = _addr;
@@ -47,6 +49,11 @@ contract BridgeVerifierControl {
         emit VerifierChanged(_verifier, false);
     }
 
+    function setProposalExp(uint8 _value) external onlyGovernance {
+        proposalExp = _value;
+        emit ProposalExpChanged(_value);
+    }
+
     modifier onlyGovernance() {
         require(msg.sender == governance, "permission denied");
         _;
@@ -55,8 +62,8 @@ contract BridgeVerifierControl {
 
 contract V2EBridgeVerifier is BridgeVerifierControl {
     struct Proposal {
-        uint8 quorum;
         bool executed;
+        uint256 executblock;
         bytes32 value;
         bytes[] signatures;
     }
@@ -92,7 +99,7 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
         bytes calldata _sig
     ) external returns(bool){
         require(
-            merkleRootProposals[_root].executed == false,
+            merkleRootProposals[_root].executed == false || block.number - merkleRootProposals[_root].executblock <= proposalExp,
             "the opertion had executed"
         );
         bytes32 msgHash = keccak256(abi.encodePacked("updateBridgeMerkleRoot",_root));
@@ -104,8 +111,8 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
         if (merkleRootProposals[_root].signatures.length == 0) {
             Proposal memory _new = Proposal({
-                quorum: quorum(verifierCount),
                 executed: false,
+                executblock:0,
                 value: msgHash,
                 signatures: new bytes[](0)
             });
@@ -121,9 +128,10 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
         emit SubmitUpdateRoot(_root, signer, _sig);
 
-        if (merkleRootProposals[_root].signatures.length >= prop.quorum) {
+        if (merkleRootProposals[_root].signatures.length >= quorum(verifierCount)) {
             bri.updateMerkleRoot(_lastRoot, _root);
             prop.executed = true;
+            prop.executblock = block.number;
             emit ExecOpertion(_root, prop.signatures);
         }
         return true;
@@ -131,7 +139,7 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
     function lockBridge(bytes32 _lastRoot, bytes calldata _sig) external returns(bool) {
         require(
-            lockBridgeProposals[_lastRoot].executed == false,
+            lockBridgeProposals[_lastRoot].executed == false || block.number - lockBridgeProposals[_lastRoot].executblock <= proposalExp,
             "the opertion had executed"
         );
         bytes32 msgHash = keccak256(abi.encodePacked("lockBridge",_lastRoot));
@@ -143,8 +151,8 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
         if (lockBridgeProposals[_lastRoot].signatures.length == 0) {
             Proposal memory _new = Proposal({
-                quorum: quorum(verifierCount),
                 executed: false,
+                executblock:0,
                 value: msgHash,
                 signatures: new bytes[](0)
             });
@@ -160,12 +168,13 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
         emit SubmitLockBridge(_lastRoot, signer, _sig);
 
-        if (prop.signatures.length >= prop.quorum) {
+        if (prop.signatures.length >= quorum(verifierCount)) {
             bri.lock(_lastRoot);
             prop.executed = true;
-
+            prop.executblock = block.number;
             Proposal storage unlockprop = unlockBridgeProposals[_lastRoot];
             unlockprop.executed = false;
+            unlockprop.executblock = 0;
             unlockprop.signatures = new bytes[](0);
             unlockprop.value = 0;
 
@@ -176,7 +185,7 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
     function unlockBridge(bytes32 _lastRoot, bytes calldata _sig) external returns(bool){
         require(
-            unlockBridgeProposals[_lastRoot].executed == false,
+            unlockBridgeProposals[_lastRoot].executed == false || block.number - unlockBridgeProposals[_lastRoot].executblock <= proposalExp,
             "the opertion had executed"
         );
         bytes32 msgHash = keccak256(abi.encodePacked("unlockBridge",_lastRoot));
@@ -188,8 +197,8 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
         if (unlockBridgeProposals[_lastRoot].signatures.length == 0) {
             Proposal memory _new = Proposal({
-                quorum: quorum(verifierCount),
                 executed: false,
+                executblock:0,
                 value: msgHash,
                 signatures: new bytes[](0)
             });
@@ -205,12 +214,13 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
         emit SubmitUnLockBridge(_lastRoot, signer, _sig);
 
-        if (prop.signatures.length >= prop.quorum) {
+        if (prop.signatures.length >= quorum(verifierCount)) {
             bri.unlock(_lastRoot);
             prop.executed = true;
-
+            prop.executblock = block.number;
             Proposal storage lockprop = lockBridgeProposals[_lastRoot];
             lockprop.executed = false;
+            lockprop.executblock = 0;
             lockprop.signatures = new bytes[](0);
             lockprop.value = 0;
 
