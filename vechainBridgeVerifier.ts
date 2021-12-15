@@ -140,6 +140,7 @@ export class VeChainBridgeVerifiter extends VeChainBridgeVerifiterReader{
             const clause = this.v2eVerifiter.send("lockBridge",0,lastRoot,sign);
             const txrep = await this.connex.vendor.sign("tx",[clause])
                 .signer(this.wallet.list[0].address)
+                .gas(250000)
                 .request();
             result.data = txrep.txid;
         } catch (error) {
@@ -157,6 +158,7 @@ export class VeChainBridgeVerifiter extends VeChainBridgeVerifiterReader{
             const clause = this.v2eVerifiter.send("updateBridgeMerkleRoot",0,lastRoot,newRoot,sign);
             const txrep = await this.connex.vendor.sign("tx",[clause])
                 .signer(this.wallet.list[0].address)
+                .gas(250000)
                 .request();
             result.data = txrep.txid;
         } catch (error) {
