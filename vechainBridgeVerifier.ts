@@ -23,7 +23,7 @@ export class VeChainBridgeVerifiterReader {
         let result = new ActionData<boolean>();
         try {
             const call = await this.v2eVerifiter.call("verifiers",address);
-            result.data = Boolean(BigInt(call.decoded[0]));
+            result.data = BigInt(call.decoded[0]) != BigInt(0) ? true : false;
         } catch (error) {
             result.error = error;
         }
@@ -38,7 +38,7 @@ export class VeChainBridgeVerifiterReader {
             let p:Proposal = {
                 hash:hash,
                 quorum:Number(call.decoded[0][0]),
-                executed:Boolean(call.decoded[0][1]),
+                executed:call.decoded[0][1] != "0" ? true : false,
                 value:String(call.decoded[0][2]),
                 signatures:(call.decoded[0][3] as Array<string>)
             }
@@ -58,7 +58,7 @@ export class VeChainBridgeVerifiterReader {
             let p:Proposal = {
                 hash:hash,
                 quorum:Number(call.decoded[0][0]),
-                executed:Boolean(call.decoded[0][1]),
+                executed:call.decoded[0][1] != "0" ? true : false,
                 value:String(call.decoded[0][2]),
                 signatures:(call.decoded[0][3] as Array<string>)
             }
