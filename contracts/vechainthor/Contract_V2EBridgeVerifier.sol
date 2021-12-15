@@ -99,7 +99,7 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
         bytes calldata _sig
     ) external returns(bool){
         require(
-            merkleRootProposals[_root].executed == false || block.number - merkleRootProposals[_root].executblock <= proposalExp,
+            merkleRootProposals[_root].executed == false || (merkleRootProposals[_root].executed == true && block.number - merkleRootProposals[_root].executblock <= proposalExp),
             "the opertion had executed"
         );
         bytes32 msgHash = keccak256(abi.encodePacked("updateBridgeMerkleRoot",_root));
@@ -139,7 +139,7 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
     function lockBridge(bytes32 _lastRoot, bytes calldata _sig) external returns(bool) {
         require(
-            lockBridgeProposals[_lastRoot].executed == false || block.number - lockBridgeProposals[_lastRoot].executblock <= proposalExp,
+            lockBridgeProposals[_lastRoot].executed == false || (lockBridgeProposals[_lastRoot].executed == true && block.number - lockBridgeProposals[_lastRoot].executblock <= proposalExp),
             "the opertion had executed"
         );
         bytes32 msgHash = keccak256(abi.encodePacked("lockBridge",_lastRoot));
@@ -185,7 +185,7 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
     function unlockBridge(bytes32 _lastRoot, bytes calldata _sig) external returns(bool){
         require(
-            unlockBridgeProposals[_lastRoot].executed == false || block.number - unlockBridgeProposals[_lastRoot].executblock <= proposalExp,
+            unlockBridgeProposals[_lastRoot].executed == false || (unlockBridgeProposals[_lastRoot].executed == true && block.number - unlockBridgeProposals[_lastRoot].executblock <= proposalExp),
             "the opertion had executed"
         );
         bytes32 msgHash = keccak256(abi.encodePacked("unlockBridge",_lastRoot));
