@@ -100,14 +100,11 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
     ) external returns(bool){
         require(
             merkleRootProposals[_root].executed == false || (merkleRootProposals[_root].executed == true && block.number - merkleRootProposals[_root].executblock <= proposalExp),
-            "the opertion had executed"
+            "the proposal had executed or expired"
         );
         bytes32 msgHash = keccak256(abi.encodePacked("updateBridgeMerkleRoot",_root));
         address signer = ECVerify.ecrecovery(msgHash, _sig);
         require(verifiers[signer], "signer isn't a verifier");
-
-        IV2EBridgeHead bri = IV2EBridgeHead(bridge);
-        require(bri.locked() == true, "the bridge hadn't locked");
 
         if (merkleRootProposals[_root].signatures.length == 0) {
             Proposal memory _new = Proposal({
@@ -128,7 +125,9 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
         emit SubmitUpdateRoot(_root, signer, _sig);
 
-        if (merkleRootProposals[_root].signatures.length >= quorum(verifierCount)) {
+        if (merkleRootProposals[_root].signatures.length >= quorum(verifierCount) && prop.executed == false) {
+            IV2EBridgeHead bri = IV2EBridgeHead(bridge);
+            require(bri.locked() == true, "the bridge not be locked");
             bri.updateMerkleRoot(_lastRoot, _root);
             prop.executed = true;
             prop.executblock = block.number;
@@ -140,14 +139,11 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
     function lockBridge(bytes32 _lastRoot, bytes calldata _sig) external returns(bool) {
         require(
             lockBridgeProposals[_lastRoot].executed == false || (lockBridgeProposals[_lastRoot].executed == true && block.number - lockBridgeProposals[_lastRoot].executblock <= proposalExp),
-            "the opertion had executed"
+            "the proposal had executed or expired"
         );
         bytes32 msgHash = keccak256(abi.encodePacked("lockBridge",_lastRoot));
         address signer = ECVerify.ecrecovery(msgHash, _sig);
         require(verifiers[signer], "signer isn't a verifier");
-
-        IV2EBridgeHead bri = IV2EBridgeHead(bridge);
-        require(bri.locked() == false, "the bridge had locked");
 
         if (lockBridgeProposals[_lastRoot].signatures.length == 0) {
             Proposal memory _new = Proposal({
@@ -168,7 +164,9 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
         emit SubmitLockBridge(_lastRoot, signer, _sig);
 
-        if (prop.signatures.length >= quorum(verifierCount)) {
+        if (prop.signatures.length >= quorum(verifierCount) && prop.executed == false) {
+            IV2EBridgeHead bri = IV2EBridgeHead(bridge);
+            require(bri.locked() == false, "the bridge is been locked");
             bri.lock(_lastRoot);
             prop.executed = true;
             prop.executblock = block.number;
@@ -177,7 +175,6 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
             unlockprop.executblock = 0;
             unlockprop.signatures = new bytes[](0);
             unlockprop.value = 0;
-
             emit ExecOpertion(_lastRoot, prop.signatures);
         }
         return true;
@@ -186,14 +183,11 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
     function unlockBridge(bytes32 _lastRoot, bytes calldata _sig) external returns(bool){
         require(
             unlockBridgeProposals[_lastRoot].executed == false || (unlockBridgeProposals[_lastRoot].executed == true && block.number - unlockBridgeProposals[_lastRoot].executblock <= proposalExp),
-            "the opertion had executed"
+            "the proposal had executed or expired"
         );
         bytes32 msgHash = keccak256(abi.encodePacked("unlockBridge",_lastRoot));
         address signer = ECVerify.ecrecovery(msgHash, _sig);
         require(verifiers[signer], "signer isn't a verifier");
-
-        IV2EBridgeHead bri = IV2EBridgeHead(bridge);
-        require(bri.locked() == true, "the bridge no lock");
 
         if (unlockBridgeProposals[_lastRoot].signatures.length == 0) {
             Proposal memory _new = Proposal({
@@ -214,7 +208,9 @@ contract V2EBridgeVerifier is BridgeVerifierControl {
 
         emit SubmitUnLockBridge(_lastRoot, signer, _sig);
 
-        if (prop.signatures.length >= quorum(verifierCount)) {
+        if (prop.signatures.length >= quorum(verifierCount) && prop.executed == false) {
+            IV2EBridgeHead bri = IV2EBridgeHead(bridge);
+            require(bri.locked() == true, "the bridge not be locked");
             bri.unlock(_lastRoot);
             prop.executed = true;
             prop.executblock = block.number;
