@@ -9,9 +9,6 @@ export class SnapshootEntity{
     @Index()
     public merkleRoot!:string;
 
-    @Column({name:"parent_merkleroot",length:66})
-    public parentMerkleRoot!:string;
-
     @Column({name:"chainname_0"})
     public chainName_0!:string;
 
@@ -20,9 +17,6 @@ export class SnapshootEntity{
 
     @Column({name:"begin_blocknum_0"})
     public beginBlockNum_0!:number;
-
-    @Column({name:"locked_blocknum_0"})
-    public lockedBlockNum_0!:number;
 
     @Column({name:"end_blocknum_0"})
     public endBlockNum_0!:number;
@@ -35,9 +29,6 @@ export class SnapshootEntity{
 
     @Column({name:"begin_blocknum_1"})
     public beginBlockNum_1!:number;
-
-    @Column({name:"locked_blocknum_1"})
-    public lockedBlockNum_1!:number;
 
     @Column({name:"end_blocknum_1"})
     public endBlockNum_1!:number;

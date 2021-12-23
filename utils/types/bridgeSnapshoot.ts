@@ -8,7 +8,6 @@ export type ChainInfo = {
     chainName:string;
     chainId:string;
     beginBlockNum:number;
-    lockedBlockNum:number;
     endBlockNum:number;
 }
 
