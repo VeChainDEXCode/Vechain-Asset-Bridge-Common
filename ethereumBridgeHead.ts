@@ -8,8 +8,6 @@ import { ActionData } from "./utils/components/actionResult";
 import { ThorDevKitEx } from "./utils/extensions/thorDevkitExten";
 import { IBridgeHead } from "./utils/iBridgeHead";
 import { BridgeSnapshoot, ZeroRoot } from "./utils/types/bridgeSnapshoot";
-import { BridgeTx } from "./utils/types/bridgeTx";
-import { tokenid, TokenInfo } from "./utils/types/tokenInfo";
 
 export class EthereumBridgeHead implements IBridgeHead{
 
@@ -20,22 +18,19 @@ export class EthereumBridgeHead implements IBridgeHead{
         this.initE2VBridge();
     }
 
-    private readonly scanBlockStep = 100;
+    private readonly scanBlockStep = 500;
 
     public async getLastSnapshoot(): Promise<ActionData<{sn:BridgeSnapshoot,txid:string,blocknum:number}>>{
         let result = new ActionData<{sn:BridgeSnapshoot,txid:string,blocknum:number}>();
-
         try {
 
             let snapshoot:BridgeSnapshoot = {
-                parentMerkleRoot:ZeroRoot(),
                 merkleRoot:ZeroRoot(),
                 chains:[
                     {
                         chainName:this.config.ethereum.chainName,
                         chainId:this.config.ethereum.chainId,
                         beginBlockNum:this.config.ethereum.startBlockNum,
-                        lockedBlockNum:this.config.ethereum.startBlockNum,
                         endBlockNum:0
                     }
                 ]
@@ -59,25 +54,6 @@ export class EthereumBridgeHead implements IBridgeHead{
 
                 const ev = events[events.length - 1];
                 snapshoot.merkleRoot = ev.raw.topics[1];
-                snapshoot.parentMerkleRoot = ev.raw.topics[3];
-                snapshoot.chains[0].beginBlockNum = parseInt(ev.raw.topics[2],16);
-                snapshoot.chains[0].endBlockNum = ev.blockNumber;
-
-                const lockevsResult = await this.lockChangeEvents(snapshoot.chains[0].beginBlockNum,snapshoot.chains[0].endBlockNum);
-                if(lockevsResult.error != undefined){
-                    result.copyBase(lockevsResult);
-                    return result;
-                }
-
-                const lockevs = lockevsResult.data!.filter(ev =>{return ev.root == snapshoot.parentMerkleRoot && ev.status == true; });
-                if(lockevs == undefined || lockevs.length == 0){
-                    result.error = new Error(`can't found lockchange event, root:${snapshoot.parentMerkleRoot}`);
-                    return result;
-                }
-                snapshoot.chains[0].lockedBlockNum = lockevs[0].blockNum;
-                txid = ev.transactionHash;
-                blocknum = ev.blockNumber;
-                
                 break;
             }
             result.data = {sn:snapshoot,txid:txid,blocknum:blocknum};

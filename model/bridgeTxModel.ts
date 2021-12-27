@@ -1,8 +1,8 @@
-import { Between, Equal, getManager, getRepository } from "typeorm";
+import { Equal, getManager, getRepository } from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BridgeSnapshoot } from "../utils/types/bridgeSnapshoot";
-import { BridgeTx } from "../utils/types/bridgeTx";
-import { bridgeTxId, BridgeTxEntity } from "./entities/bridgeTx.entity";
+import { BaseBridgeTx,SwapBridgeTx,ClaimBridgeTx, bridgeTxId, swapTxHash, BridgeTxType } from "../utils/types/bridgeTx";
+import { BridgeTxEntity } from "./entities/bridgeTx.entity";
 
 export default class BridgeTxModel{
     constructor(env:any){
@@ -10,29 +10,39 @@ export default class BridgeTxModel{
         this.config = env.config;
     }
 
-    public async saveBridgeTxs(txs:BridgeTx[]):Promise<ActionResult>{
+    public async saveBridgeTxs(txs:BaseBridgeTx[]):Promise<ActionResult>{
         let result = new ActionResult();
 
         try {
-            await getManager().transaction(async transactionalEntityManager => {
-                for(const swapTx of txs){
+            await getManager().transaction(async trans => {
+                for(const tx of txs){
                     let entity = new BridgeTxEntity();
-                    entity.bridgetxid = bridgeTxId(swapTx.chainName,swapTx.chainId,swapTx.blockNumber,swapTx.txid,swapTx.clauseIndex,swapTx.index,swapTx.account,swapTx.token);
-                    entity.chainName = swapTx.chainName,
-                    entity.chainId = swapTx.chainId,
-                    entity.blockNumber = swapTx.blockNumber,
-                    entity.blockId = swapTx.blockId,
-                    entity.txid = swapTx.txid,
-                    entity.clauseIndex = swapTx.clauseIndex,
-                    entity.index = swapTx.index,
-                    entity.account = swapTx.account,
-                    entity.token = swapTx.token,
-                    entity.amount = '0x' + swapTx.amount.toString(16),
-                    entity.reward = '0x' + swapTx.amount.toString(16),
-                    entity.timestamp = swapTx.timestamp,
-                    entity.type = swapTx.type == "swap" ? 1 : 2;
-                    entity.valid = true;
-                    await transactionalEntityManager.save(entity);
+                    entity.bridgeTxId = bridgeTxId(tx);
+                    entity.chainName = tx.chainName;
+                    entity.chainId = tx.chainId;
+                    entity.blockNumber = tx.blockNumber;
+                    entity.blockId = tx.blockId;
+                    entity.txid = tx.txid;
+                    entity.clauseIndex = tx.clauseIndex;
+                    entity.index = tx.index;
+                    entity.token = tx.token;
+                    entity.amount = '0x' + tx.amount.toString(16);
+                    entity.timestamp = tx.timestamp;
+                    entity.recipient = tx.recipient;entity.type
+                    if(tx.type == BridgeTxType.swap){
+                        entity.type = 1;
+                        entity.swapTxHash = swapTxHash(tx as SwapBridgeTx);
+                        entity.from = (tx as SwapBridgeTx).from;
+                        entity.reward = '0x' + (tx as SwapBridgeTx).reward.toString(16);
+                        entity.swapCount = '0x' + (tx as SwapBridgeTx).swapCount.toString(16);
+                    } else {
+                        entity.type = 2;
+                        entity.swapTxHash = "";
+                        entity.from = "";
+                        entity.reward = "0x0";
+                        entity.swapCount = "0x0";
+                    }
+                    await trans.save(entity);
                 }
             })
         } catch (error) {
@@ -41,11 +51,11 @@ export default class BridgeTxModel{
         return result;
     }
 
-    public async getLastBridgeTx(chainName:string,chainId:string):Promise<ActionData<BridgeTx>>{
-        let result = new ActionData<BridgeTx>();
+    public async getLastBridgeTx(chainName:string,chainId:string):Promise<ActionData<BaseBridgeTx>>{
+        let result = new ActionData<BaseBridgeTx>();
 
         try {
-            let data = await getRepository(BridgeTxEntity)
+            let data:BridgeTxEntity = await getRepository(BridgeTxEntity)
             .findOne({
                 chainName:Equal(chainName),
                 chainId:Equal(chainId),
@@ -56,7 +66,8 @@ export default class BridgeTxModel{
                 }
             });
             if(data != undefined){
-                let swap:BridgeTx = {
+                let tx:BaseBridgeTx = {
+                    bridgeTxId:data.bridgeTxId,
                     chainName:data.chainName,
                     chainId:data.chainId,
                     blockNumber:data.blockNumber,
@@ -64,14 +75,19 @@ export default class BridgeTxModel{
                     txid:data.txid,
                     clauseIndex:data.clauseIndex,
                     index:data.index,
-                    account:data.account,
                     token:data.token,
                     amount:BigInt(data.amount),
-                    reward:BigInt(data.reward),
                     timestamp:data.timestamp,
-                    type:data.type == 1 ? "swap" : "claim"
-                };
-                result.data = swap;
+                    recipient:data.recipient,
+                    type:data.type
+                }
+                if(tx.type == BridgeTxType.swap){
+                    (tx as SwapBridgeTx).swapTxHash = data.swapTxHash;
+                    (tx as SwapBridgeTx).from = data.from;
+                    (tx as SwapBridgeTx).reward = BigInt(data.reward);
+                    (tx as SwapBridgeTx).swapCount = BigInt(data.swapCount);
+                }
+                result.data = tx;
             }
         } catch (error) {
             result.error = error;
@@ -80,8 +96,8 @@ export default class BridgeTxModel{
         return result;
     }
 
-    public async getClaimTxs(chainName:string,chainId:string,account:string,token?:string,begin?:number,end?:number,limit:number = 50,offset:number = 0):Promise<ActionData<BridgeTx[]>>{
-        let result = new ActionData<BridgeTx[]>();
+    public async getClaimTxs(chainName:string,chainId:string,account:string,token?:string,begin?:number,end?:number,limit:number = 50,offset:number = 0):Promise<ActionData<ClaimBridgeTx[]>>{
+        let result = new ActionData<ClaimBridgeTx[]>();
         result.data = new Array();
 
         try {
@@ -96,37 +112,29 @@ export default class BridgeTxModel{
             .offset(offset)
             .limit(limit);
 
-            if(begin != undefined){
-                query.andWhere("blocknumber >= :begin", {begin:begin})
-            }
+            query = begin != undefined ? query.andWhere("blocknumber >= :begin", {begin:begin}) : query;
+            query = end != undefined ? query.andWhere("blocknumber <= :end", {end:end}) : query;
+            query = token != undefined ? query.andWhere("token = :token",{token:token.toLowerCase()}) : query;
 
-            if(end != undefined){
-                query.andWhere("blocknumber <= :end", {end:end})
-            }
-
-            if(token != undefined){
-                query.andWhere("token = :token",{token:token.toLowerCase()})
-            }
-
-            const data = await query.getMany();
+            const datas:BridgeTxEntity[] = await query.getMany();
         
-            for(const item of data){
-                let swaptx:BridgeTx = {
-                    chainName:item.chainName,
-                    chainId:item.chainId,
-                    blockNumber:item.blockNumber,
-                    blockId:item.blockId,
-                    txid:item.txid,
-                    clauseIndex:item.clauseIndex,
-                    index:item.index,
-                    account:item.account,
-                    token:item.token,
-                    amount:BigInt(item.amount),
-                    reward:BigInt(item.reward),
-                    timestamp:item.timestamp,
-                    type:item.type == 1 ? "swap" : "claim"
-                    };
-                result.data.push(swaptx);
+            for(const data of datas){
+                let claimTx:ClaimBridgeTx = {
+                    bridgeTxId:data.bridgeTxId,
+                    chainName:data.chainName,
+                    chainId:data.chainId,
+                    blockNumber:data.blockNumber,
+                    blockId:data.blockId,
+                    txid:data.txid,
+                    clauseIndex:data.clauseIndex,
+                    index:data.index,
+                    token:data.token,
+                    amount:BigInt(data.amount),
+                    timestamp:data.timestamp,
+                    recipient:data.recipient,
+                    type:BridgeTxType.claim
+                };
+                result.data.push(claimTx);
             }
         } catch (error) {
             result.error = error;
@@ -136,7 +144,7 @@ export default class BridgeTxModel{
     }
 
     public async getSwapTxs(chainName:string,chainId:string,account:string,token?:string,begin?:number,end?:number,limit?:number,offset:number = 0):Promise<ActionData<BridgeTx[]>>{
-        let result = new ActionData<BridgeTx[]>();
+        let result = new ActionData<SwapBridgeTx[]>();
         result.data = new Array();
 
         try {
@@ -151,22 +159,15 @@ export default class BridgeTxModel{
             .offset(offset)
             .limit(limit);
 
-            if(begin != undefined){
-                query.andWhere("blocknumber >= :begin", {begin:begin})
-            }
+            query = begin != undefined ? query.andWhere("blocknumber >= :begin", {begin:begin}) : query;
+            query = end != undefined ? query.andWhere("blocknumber <= :end", {end:end}) : query;
+            query = token != undefined ?  query.andWhere("token = :token",{token:token.toLowerCase()}) :query;
 
-            if(end != undefined){
-                query.andWhere("blocknumber <= :end", {end:end})
-            }
-
-            if(token != undefined){
-                query.andWhere("token = :token",{token:token.toLowerCase()})
-            }
-
-            const data = await query.getMany();
+            const data:BridgeTxEntity[] = await query.getMany();
 
             for(const item of data){
-                let swaptx:BridgeTx = {
+                let bridgeTx:SwapBridgeTx = {
+                    bridgeTxId:item.bridgeTxId,
                     chainName:item.chainName,
                     chainId:item.chainId,
                     blockNumber:item.blockNumber,
@@ -174,14 +175,17 @@ export default class BridgeTxModel{
                     txid:item.txid,
                     clauseIndex:item.clauseIndex,
                     index:item.index,
-                    account:item.account,
                     token:item.token,
                     amount:BigInt(item.amount),
-                    reward:BigInt(item.reward),
                     timestamp:item.timestamp,
-                    type:item.type == 1 ? "swap" : "claim"
+                    recipient:item.recipient,
+                    type:BridgeTxType.swap,
+                    swapTxHash:item.swapTxHash,
+                    from:item.from,
+                    reward:BigInt(item.reward),
+                    swapCount:BigInt(item.swapCount)
                     };
-                result.data.push(swaptx);
+                result.data.push(bridgeTx);
             }
         } catch (error) {
             result.error = error;
@@ -190,8 +194,8 @@ export default class BridgeTxModel{
         return result;
     }
 
-    public async getSwapTxsBySnapshoot(sn:BridgeSnapshoot,limit?:number,offset:number = 0):Promise<ActionData<BridgeTx[]>>{
-        let result = new ActionData<BridgeTx[]>();
+    public async getBridgeTxsBySnapshoot(sn:BridgeSnapshoot,limit?:number,offset:number = 0):Promise<ActionData<BaseBridgeTx[]>>{
+        let result = new ActionData<BaseBridgeTx[]>();
         result.data = new Array();
 
         try {
@@ -205,9 +209,10 @@ export default class BridgeTxModel{
                 .andWhere("valid = true")
                 .limit(limit)
                 .offset(offset)
-                const data = await query.getMany();
+                const data:BridgeTxEntity[] = await query.getMany();
                 for(const item of data){
-                    let swaptx:BridgeTx = {
+                    let bridgeTx:BaseBridgeTx = {
+                        bridgeTxId:item.bridgeTxId,
                         chainName:item.chainName,
                         chainId:item.chainId,
                         blockNumber:item.blockNumber,
@@ -215,14 +220,19 @@ export default class BridgeTxModel{
                         txid:item.txid,
                         clauseIndex:item.clauseIndex,
                         index:item.index,
-                        account:item.account,
                         token:item.token,
                         amount:BigInt(item.amount),
-                        reward:BigInt(item.reward),
                         timestamp:item.timestamp,
-                        type:item.type == 1 ? "swap" : "claim"
+                        recipient:item.recipient,
+                        type:item.type
                         };
-                    result.data.push(swaptx);
+                    if(bridgeTx.type == BridgeTxType.swap){
+                        (bridgeTx as SwapBridgeTx).swapTxHash = item.swapTxHash;
+                        (bridgeTx as SwapBridgeTx).from = item.from;
+                        (bridgeTx as SwapBridgeTx).reward = BigInt(item.reward);
+                        (bridgeTx as SwapBridgeTx).swapCount = BigInt(item.swapCount);
+                    }
+                    result.data.push(bridgeTx);
                 }
             }
         } catch (error) {
@@ -235,9 +245,9 @@ export default class BridgeTxModel{
         let result = new ActionResult();
 
         try {
-            await getManager().transaction(async transactionalEntityManager => {
+            await getManager().transaction(async trans => {
                 for(const blockId of blockIds){
-                    await transactionalEntityManager.update(
+                    await trans.update(
                         BridgeTxEntity,
                         {blockId:blockId,chainName:chainName,chainId:chainId},
                         {valid:false})

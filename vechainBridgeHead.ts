@@ -8,8 +8,6 @@ import { ActionData } from "./utils/components/actionResult";
 import { ThorDevKitEx } from "./utils/extensions/thorDevkitExten";
 import { IBridgeHead } from "./utils/iBridgeHead";
 import { BridgeSnapshoot, ZeroRoot } from "./utils/types/bridgeSnapshoot";
-import { BridgeTx } from "./utils/types/bridgeTx";
-import { tokenid, TokenInfo } from "./utils/types/tokenInfo";
 import { VIP180Token } from "./vip180Token";
 export class VeChainBridgeHead implements IBridgeHead {
 

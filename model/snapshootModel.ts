@@ -1,9 +1,7 @@
 import { getConnection, getManager, getRepository, SelectQueryBuilder } from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BridgeSnapshoot, ZeroRoot } from "../utils/types/bridgeSnapshoot";
-import { BridgeTx } from "../utils/types/bridgeTx";
-import { bridgeTxId } from "./entities/bridgeTx.entity";
-import { PackingLogEntity } from "./entities/packingLog.entity";
+import { BaseBridgeTx } from "../utils/types/bridgeTx";
 import { SnapshootEntity } from "./entities/snapshoot.entity";
 
 export class SnapshootModel {
@@ -19,8 +17,8 @@ export class SnapshootModel {
             parentMerkleRoot:ZeroRoot(),
             merkleRoot:ZeroRoot(),
             chains:[
-                {chainName:this.config.vechain.chainName,chainId:this.config.vechain.chainId,lockedBlockNum:this.config.vechain.startBlockNum,beginBlockNum:this.config.vechain.startBlockNum,endBlockNum:this.config.vechain.startBlockNum},
-                {chainName:this.config.ethereum.chainName,chainId:this.config.ethereum.chainId,lockedBlockNum:this.config.ethereum.startBlockNum,beginBlockNum:this.config.ethereum.startBlockNum,endBlockNum:this.config.ethereum.startBlockNum},
+                {chainName:this.config.vechain.chainName,chainId:this.config.vechain.chainId,beginBlockNum:this.config.vechain.startBlockNum,endBlockNum:this.config.vechain.startBlockNum},
+                {chainName:this.config.ethereum.chainName,chainId:this.config.ethereum.chainId,beginBlockNum:this.config.ethereum.startBlockNum,endBlockNum:this.config.ethereum.startBlockNum},
             ]
         }
 
@@ -35,8 +33,8 @@ export class SnapshootModel {
                     parentMerkleRoot:data.parentMerkleRoot,
                     merkleRoot:data.merkleRoot,
                     chains:[
-                        {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,lockedBlockNum:data.lockedBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
-                        {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,lockedBlockNum:data.lockedBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
+                        {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
+                        {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
                     ]
                 }
             }
@@ -53,18 +51,8 @@ export class SnapshootModel {
             parentMerkleRoot:ZeroRoot(),
             merkleRoot:ZeroRoot(),
             chains:[
-                {
-                    chainName:this.config.vechain.chainName,
-                    chainId:this.config.vechain.chainId,
-                    lockedBlockNum:this.config.vechain.startBlockNum,
-                    beginBlockNum:this.config.vechain.startBlockNum,
-                    endBlockNum:this.config.vechain.startBlockNum},
-                {
-                    chainName:this.config.ethereum.chainName,
-                    chainId:this.config.ethereum.chainId,
-                    lockedBlockNum:this.config.ethereum.startBlockNum,
-                    beginBlockNum:this.config.ethereum.startBlockNum,
-                    endBlockNum:this.config.ethereum.startBlockNum},
+                { chainName:this.config.vechain.chainName,chainId:this.config.vechain.chainId,beginBlockNum:this.config.vechain.startBlockNum,endBlockNum:this.config.vechain.startBlockNum },
+                { chainName:this.config.ethereum.chainName,chainId:this.config.ethereum.chainId,beginBlockNum:this.config.ethereum.startBlockNum,endBlockNum:this.config.ethereum.startBlockNum },
             ]
         }
 
@@ -79,8 +67,8 @@ export class SnapshootModel {
                         parentMerkleRoot:data.parentMerkleRoot,
                         merkleRoot:data.merkleRoot,
                         chains:[
-                            {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,lockedBlockNum:data.lockedBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
-                            {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,lockedBlockNum:data.lockedBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
+                            {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
+                            {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
                         ]
                     }
                 }
@@ -100,13 +88,11 @@ export class SnapshootModel {
                 {
                     chainName:this.config.vechain.chainName,
                     chainId:this.config.vechain.chainId,
-                    lockedBlockNum:this.config.vechain.startBlockNum,
                     beginBlockNum:this.config.vechain.startBlockNum,
                     endBlockNum:this.config.vechain.startBlockNum},
                 {
                     chainName:this.config.ethereum.chainName,
                     chainId:this.config.ethereum.chainId,
-                    lockedBlockNum:this.config.ethereum.startBlockNum,
                     beginBlockNum:this.config.ethereum.startBlockNum,
                     endBlockNum:this.config.ethereum.startBlockNum},
             ]
@@ -123,8 +109,8 @@ export class SnapshootModel {
                         parentMerkleRoot:data.parentMerkleRoot,
                         merkleRoot:data.merkleRoot,
                         chains:[
-                            {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,lockedBlockNum:data.lockedBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
-                            {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,lockedBlockNum:data.lockedBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
+                            {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
+                            {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
                         ]
                     }
                 }
@@ -135,7 +121,7 @@ export class SnapshootModel {
         return result;
     }
 
-    public async getSnapshootByClaimTx(claimtx:BridgeTx,limit?:number,offset?:number):Promise<ActionData<BridgeSnapshoot[]>>{
+    public async getSnapshootByClaimTx(claimtx:BaseBridgeTx,limit?:number,offset?:number):Promise<ActionData<BridgeSnapshoot[]>>{
         let result = new ActionData<BridgeSnapshoot[]>();
         result.data = new Array();
 
@@ -168,8 +154,8 @@ export class SnapshootModel {
                     parentMerkleRoot:data.parentMerkleRoot,
                     merkleRoot:data.merkleRoot,
                     chains:[
-                        {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,lockedBlockNum:data.lockedBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
-                        {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,lockedBlockNum:data.lockedBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
+                        {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
+                        {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
                     ]}
                 result.data.push(sn);
             }
@@ -200,18 +186,17 @@ export class SnapshootModel {
         let result = new ActionResult();
 
         try {
-            await getManager().transaction(async transactionalEntityManager => {
+            await getManager().transaction(async trans => {
                 for(const sn of sns){
                     let entity = new SnapshootEntity();
                     entity.merkleRoot = sn.merkleRoot;
-                    entity.parentMerkleRoot = sn.parentMerkleRoot;
+                    entity.parent = sn.parentMerkleRoot;
                     const vechainInfo = sn.chains.find(chain => {return chain.chainName == this.config.vechain.chainName && chain.chainId == this.config.vechain.chainId;});
                     const ethereumInfo = sn.chains.find(chain => {return chain.chainName == this.config.ethereum.chainName && chain.chainId == this.config.ethereum.chainId;});
                     if(vechainInfo != undefined){
                         entity.chainName_0 = vechainInfo.chainName as string;
                         entity.chainId_0 = vechainInfo.chainId as string;
                         entity.beginBlockNum_0 = vechainInfo.beginBlockNum;
-                        entity.lockedBlockNum_0 = vechainInfo.lockedBlockNum;
                         entity.endBlockNum_0 = vechainInfo.endBlockNum;
                     }
 
@@ -219,74 +204,12 @@ export class SnapshootModel {
                         entity.chainName_1 = ethereumInfo.chainName as string;
                         entity.chainId_1 = ethereumInfo.chainId as string;
                         entity.beginBlockNum_1 = ethereumInfo.beginBlockNum;
-                        entity.lockedBlockNum_1 = ethereumInfo.lockedBlockNum;
                         entity.endBlockNum_1 = ethereumInfo.endBlockNum;
                     }
                     entity.valid = true;
-                    await transactionalEntityManager.save(entity);
+                    await trans.save(entity);
                 }
             });
-        } catch (error) {
-            result.error = error;
-        }
-        return result;
-    }
-
-    public async savePackingLog(root:string,txs:BridgeTx[]):Promise<ActionResult>{
-        let result = new ActionResult();
-        try {
-            await getManager().transaction(async transactionalEntityManager => {
-                for(const tx of txs){
-                    let entity = new PackingLogEntity();
-                    entity.logid = 0;
-                    entity.merkleRoot = root;
-                    entity.bridgetxid = bridgeTxId(tx.chainName,tx.chainId,tx.blockNumber,tx.txid,tx.clauseIndex,tx.index,tx.account,tx.token);
-                    entity.valid = true;
-                    await transactionalEntityManager.save(entity);
-                }
-            });
-        } catch (error) {
-            result.error = error;
-        }
-        return result;
-    }
-
-    public async deletePackingLog(root:string):Promise<ActionResult>{
-        let result = new ActionResult();
-
-        try {
-            await getConnection()
-            .createQueryBuilder()
-            .delete()
-            .from(PackingLogEntity)
-            .where("merkleRoot = :merkleRoot", { merkleRoot: root })
-            .execute();
-        } catch (error) {
-            result.error = error;
-        }
-
-        return result;
-    }
-
-    public async getLogByBridgeTxId(bridgeTxIds:string[]):Promise<ActionData<Array<{merkleRoot:string,bridgeTxId:string}>>>{
-        let result = new ActionData<Array<{merkleRoot:string,bridgeTxId:string}>>();
-        result.data = new Array();
-        try {
-            let txbatch = new Array<string>();
-            for(let i = 0; i < bridgeTxIds.length; i++){
-                txbatch.push(bridgeTxIds[i]);
-                if(txbatch.length < 10 && i != bridgeTxIds.length + 1){
-                    continue;
-                }
-                const datas = await getRepository(PackingLogEntity)
-                    .createQueryBuilder()
-                    .where("bridgetxid IN (:list)",{list:txbatch})
-                    .getMany();
-                for(const log of datas){
-                    result.data.push({merkleRoot:log.merkleRoot,bridgeTxId:log.bridgetxid});
-                }
-                txbatch = new Array();
-            }
         } catch (error) {
             result.error = error;
         }

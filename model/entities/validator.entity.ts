@@ -1,9 +1,9 @@
 import { Entity, PrimaryColumn, Column } from "typeorm";
 
-@Entity("verifier")
-export class VerifierEntity{
-    @PrimaryColumn({name:"verifier"})
-    public verifier!:string;
+@Entity("validator")
+export class ValidatorEntity{
+    @PrimaryColumn({name:"validator"})
+    public validator!:string;
 
     @Column({name:"status"})
     public status!:boolean;

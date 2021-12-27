@@ -1,23 +1,23 @@
 import { getManager, getRepository } from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
-import { Verifier } from "../utils/types/verifier";
-import { VerifierEntity } from "./entities/verifier.entity";
+import { Validator } from "../utils/types/validator";
+import { ValidatorEntity } from "./entities/validator.entity";
 
 export default class VerifierModel {
 
-    public async getVerifiers():Promise<ActionData<Verifier[]>>{
-        let result = new ActionData<Verifier[]>();
-        result.data = new Array<Verifier>();
+    public async getValidators():Promise<ActionData<Validator[]>>{
+        let result = new ActionData<Validator[]>();
+        result.data = new Array<Validator>();
 
         try {
-            let data = await getRepository(VerifierEntity)
+            let data = await getRepository(ValidatorEntity)
                 .createQueryBuilder()
                 .where("valid = true")
                 .andWhere("status = true")
                 .getMany();
             for(const entity of data){
-                let _new:Verifier = {
-                    verifier:entity.verifier,
+                let _new:Validator = {
+                    validator:entity.validator,
                     status:entity.status,
                     update:entity.update,
                     updateBlock:entity.updateBlock
@@ -26,24 +26,24 @@ export default class VerifierModel {
             }
 
         } catch (error) {
-            result.error = new Error(`getVerifiers faild: ${JSON.stringify(error)}`);
+            result.error = new Error(`getValidators faild: ${JSON.stringify(error)}`);
         }
         
         return result;
     }
 
-    public async save(verifiers:Verifier[]):Promise<ActionResult>{
+    public async save(validators:Validator[]):Promise<ActionResult>{
         let result = new ActionResult();
         try {
-            await getManager().transaction(async transactionalEntityManager => {
-                for(const verifier of verifiers){
-                    let entity = new VerifierEntity();
-                    entity.verifier = verifier.verifier;
+            await getManager().transaction(async trans => {
+                for(const verifier of validators){
+                    let entity = new ValidatorEntity();
+                    entity.validator = verifier.validator;
                     entity.status = verifier.status;
                     entity.update = verifier.update;
                     entity.updateBlock = verifier.updateBlock;
                     entity.valid = true;
-                    await transactionalEntityManager.save(entity);
+                    await trans.save(entity);
                 }
             });
         } catch (error) {
@@ -52,13 +52,13 @@ export default class VerifierModel {
         return result;
     }
 
-    public async removeByBlockIds(chainName:string,chainId:string,blockIds:string[]):Promise<ActionResult>{
+    public async removeByBlockIds(blockIds:string[]):Promise<ActionResult>{
         let result = new ActionResult();
         try {
-            await getManager().transaction(async transactionalEntityManager => {
+            await getManager().transaction(async trans => {
                 for(const blockId of blockIds){
-                    await transactionalEntityManager.update(
-                        VerifierEntity,
+                    await trans.update(
+                        ValidatorEntity,
                         {updateBlock:blockId},
                         {valid:false})
                 }

@@ -1,4 +1,12 @@
-export type BridgeTx = {
+import { keccak256 } from "thor-devkit";
+
+export enum BridgeTxType {
+    swap = 1,
+    claim = 2
+}
+
+export type BaseBridgeTx = {
+    bridgeTxId:string;
     chainName:string;
     chainId:string;
     blockNumber:number;
@@ -6,10 +14,42 @@ export type BridgeTx = {
     txid:string;
     clauseIndex:number;
     index:number;
-    account:string;
     token:string;
     amount:bigint;
-    reward:bigint;
     timestamp:number;
-    type:"swap"|"claim"
+    recipient:string;
+    type:BridgeTxType;
+}
+
+export type SwapBridgeTx = BaseBridgeTx & {
+    swapTxHash:string;
+    from:string;
+    reward:bigint;
+    swapCount:bigint
+}
+
+export type ClaimBridgeTx = BaseBridgeTx
+
+export function swapTxHash(tx:SwapBridgeTx):string {
+    let buff = Buffer.concat([
+        Buffer.from(tx.chainName),
+        Buffer.from(tx.chainId),
+        Buffer.from(tx.recipient),
+        Buffer.from(tx.token),
+        Buffer.from(tx.amount.toString(16),'hex'),
+        Buffer.from(tx.swapCount.toString(16),'hex'),
+    ]);
+    return '0x' + keccak256(buff).toString('hex');
+}
+
+export function bridgeTxId(tx:BaseBridgeTx):string {
+    let buff = Buffer.concat([
+        Buffer.from(tx.chainName),
+        Buffer.from(tx.chainId),
+        Buffer.from(tx.blockId.substring(2),'hex'),
+        Buffer.from(tx.txid.substring(2),'hex'),
+        Buffer.from(BigInt(tx.clauseIndex).toString(16),'hex'),
+        Buffer.from(BigInt(tx.index).toString(16),'hex'),
+    ]);
+    return '0x' + keccak256(buff).toString('hex');
 }

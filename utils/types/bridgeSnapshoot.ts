@@ -1,5 +1,4 @@
 export type BridgeSnapshoot = {
-    parentMerkleRoot:string;
     merkleRoot:string;
     chains:Array<ChainInfo>;
 }

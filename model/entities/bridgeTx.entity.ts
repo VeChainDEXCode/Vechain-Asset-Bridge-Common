@@ -1,11 +1,10 @@
-import { keccak256 } from "thor-devkit";
 import { Entity, PrimaryColumn, Column, Index } from "typeorm";
 
 @Entity("bridgeTx")
 export class BridgeTxEntity{
 
     @PrimaryColumn({name:"bridgetxid"})
-    public bridgetxid!:string;
+    public bridgeTxId!:string;
 
     @Index()
     @Column({name:"chainname"})
@@ -33,41 +32,31 @@ export class BridgeTxEntity{
     public index!:number;
 
     @Index()
-    @Column({name:"account"})
-    public account!:string;
-
-    @Index()
     @Column({name:"token"})
     public token!:string;
 
     @Column({name:"amount"})
     public amount!:string;
 
-    @Column({name:"reward"})
-    public reward!:string;
-
     @Column({name:"timestamp"})
     public timestamp!:number;
 
+    @Column({name:"recipient"})
+    public recipient!:string;
+
     @Column({name:"type"})
-    @Index()
-    public type!:number;
+    public type!:1|2;
 
-    @Column({name:"valid"})
+    @Column({name:"swaptxhash"})
     @Index()
-    public valid!:boolean;
-}
+    public swapTxHash!:string;
 
-export function bridgeTxId(chainName:string,chainId:string,blocknum:number,txid:string,clauseIndex:number,index:number,account:string,token:string):string {
-    let encode = Buffer.concat([
-        Buffer.from(chainName),
-        Buffer.from(chainId),
-        Buffer.from(blocknum.toString()),
-        Buffer.from(txid),
-        Buffer.from(clauseIndex.toString()),
-        Buffer.from(index.toString()),
-        Buffer.from(account.substring(2),'hex'),
-        Buffer.from(token.substring(2),'hex'),
-    ]);
-    return '0x' + keccak256(encode).toString('hex');
+    @Column({name:"from"})
+    public from!:string;
+
+    @Column({name:"reward"})
+    public reward!:string;
+
+    @Column({name:"swapcount"})
+    public swapCount!:string;
 }
