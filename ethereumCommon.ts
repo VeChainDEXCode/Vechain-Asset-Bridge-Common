@@ -1,6 +1,7 @@
 import Web3 from "web3";
 import { ActionData } from "./utils/components/actionResult";
 import { sleep } from "./utils/sleep";
+import { BlockIndex } from "./utils/types/blockIndex";
 
 export class EthereumCommon {
     constructor(env:any){
@@ -101,6 +102,31 @@ export class EthereumCommon {
             result.error = error;
             return result;
         }
+    }
+
+    public async getBlockIndex(begin:number,end:number):Promise<ActionData<BlockIndex[]>> {
+        let result = new ActionData<BlockIndex[]>();
+        result.data = new Array();
+
+        try {
+            for(let index = begin; index <= end;index++){
+                const block = await this.web3.eth.getBlock(index);
+                if(block == null){
+                    break;
+                }
+                result.data.push({
+                    chainName:this.config.ethereum.chainName as string,
+                    chainId:this.config.ethereum.chainId as string,
+                    blockId:block.hash,
+                    blockNum:block.number,
+                    timestamp:block.timestamp as number
+                });
+            }
+        } catch (error) {
+            result.error = error; 
+        }
+
+        return result;
     }
 
     private env:any;

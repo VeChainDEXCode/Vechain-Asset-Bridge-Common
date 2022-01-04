@@ -1,5 +1,6 @@
 import { Framework } from "@vechain/connex-framework";
-import { ActionData } from "./utils/components/actionResult";
+import { ActionData, ActionResult } from "./utils/components/actionResult";
+import { BlockIndex } from "./utils/types/blockIndex";
 
 export class VeChainCommon {
     constructor(env:any){
@@ -99,6 +100,30 @@ export class VeChainCommon {
             }
         } catch (error) {
             result.error = error;
+        }
+        return result;
+    }
+
+    public async getBlockIndex(begin:number,end:number):Promise<ActionData<BlockIndex[]>> {
+        let result = new ActionData<BlockIndex[]>();
+        result.data = new Array();
+
+        try {
+            for(let index = begin; index <= end;index++){
+                const block = await this.connex.thor.block(index).get();
+                if(block == null){
+                    break;
+                }
+                result.data.push({
+                    chainName:this.config.vechain.chainName as string,
+                    chainId:this.config.vechain.chainId as string,
+                    blockId:block.id,
+                    blockNum:block.number,
+                    timestamp:block.timestamp
+                });
+            }
+        } catch (error) {
+            result.error = error; 
         }
         return result;
     }

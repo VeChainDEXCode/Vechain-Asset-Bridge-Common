@@ -1,17 +1,14 @@
 import { Column, Entity, Index, IsNull, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import { fixedBytes } from "../../utils/extensions/transformers";
 
 @Entity("snapshoot")
-@Index(["chainname_0","chainid_0"])
-@Index(["chainname_1","chainid_1"])
+@Index(["chainName_0","chainId_0"])
+@Index(["chainName_1","chainId_1"])
 export class SnapshootEntity{
 
-    @PrimaryColumn({name:"merkleroot",length:66})
+    @PrimaryColumn({name:"merkleroot"})
     @Index()
     public merkleRoot!:string;
-
-    @Column({name:"parent",length:66})
-    @Index()
-    public parent!:string;
 
     @Column({name:"chainname_0"})
     public chainName_0!:string;
@@ -19,10 +16,10 @@ export class SnapshootEntity{
     @Column({name:"chainid_0"})
     public chainId_0!:string;
 
-    @Column({name:"begin_blocknum_0"})
+    @Column({name:"begin_blocknum_0",unsigned: true})
     public beginBlockNum_0!:number;
 
-    @Column({name:"end_blocknum_0"})
+    @Column({name:"end_blocknum_0",unsigned: true})
     public endBlockNum_0!:number;
 
     @Column({name:"chainname_1"})
@@ -31,12 +28,12 @@ export class SnapshootEntity{
     @Column({name:"chainid_1"})
     public chainId_1!:string;
 
-    @Column({name:"begin_blocknum_1"})
+    @Column({name:"begin_blocknum_1",unsigned: true})
     public beginBlockNum_1!:number;
 
-    @Column({name:"end_blocknum_1"})
+    @Column({name:"end_blocknum_1",unsigned: true})
     public endBlockNum_1!:number;
 
-    @Column({name:"valid"})
+    @Column({name:"valid",type:"boolean",default:true})
     public valid!:boolean;
 }

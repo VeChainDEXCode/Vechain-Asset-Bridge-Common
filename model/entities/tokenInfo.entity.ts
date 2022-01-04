@@ -1,9 +1,10 @@
 import { Entity, PrimaryColumn, Column } from "typeorm";
+import { fixedBytes } from "../../utils/extensions/transformers";
 
 @Entity("tokeInfo")
 export class TokenEntity{
 
-    @PrimaryColumn({name:"tokenid",length:50})
+    @PrimaryColumn({name:"tokenid"})
     public tokenid!:string;
 
     @Column({name:"chainname"})
@@ -18,30 +19,30 @@ export class TokenEntity{
     @Column({name:"symbol"})
     public symbol!:string;
 
-    @Column({name:"decimals"})
+    @Column({name:"decimals",unsigned: true})
     public decimals!:number;
 
     @Column({name:"tokenaddr"})
     public tokenAddr!:string;
 
-    @Column({name:"tokentype"})
-    public tokenType!:string;
+    @Column({name:"tokentype",unsigned: true})
+    public tokenType!:number;
 
     @Column({name:"targettoken"})
     public targetToken!:string;
 
-    @Column({name:"begin"})
+    @Column({name:"begin",unsigned: true})
     public begin!:number;
 
-    @Column({name:"end"})
+    @Column({name:"end",unsigned: true})
     public end!:number;
 
-    @Column({name:"update"})
+    @Column({name:"update",unsigned: true})
     public update!:number;
 
-    @Column({name:"updateBlock"})
+    @Column({name:"updateblock"})
     public updateBlock!:string;
 
-    @Column({name:"valid"})
+    @Column({name:"valid",type:"boolean",default:true})
     public valid!:boolean;
 }

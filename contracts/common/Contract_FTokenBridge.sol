@@ -49,9 +49,12 @@ contract FTokenBridgeControl {
         string tChainId;
         uint256 begin;
         uint256 end;
+        address next;
     }
 
     mapping(address => TokenInfo) public tokens;
+    address public firstToken;
+    address public latestToken;
 
     function setMaster(address _new) external onlyMaster {
         emit MasterChanged(master, _new);
@@ -88,8 +91,19 @@ contract FTokenBridgeControl {
                 tChainname: _tchainname,
                 tChainId: _tchainid,
                 begin: _begin,
-                end: _end
+                end: _end,
+                next:address(0)
             });
+
+            if(firstToken == address(0)){
+                firstToken = _token;
+            }
+
+            if(latestToken != address(0)){
+                tokens[latestToken].next = _token;
+            }
+            
+            latestToken = _token;
             tokens[_token] = _new;
         } else {
             TokenInfo storage info = tokens[_token];

@@ -1,62 +1,63 @@
 import { Entity, PrimaryColumn, Column, Index } from "typeorm";
+import { fixedBytes } from "../../utils/extensions/transformers";
 
-@Entity("bridgeTx")
+@Entity(`bridgeTx`)
 export class BridgeTxEntity{
 
-    @PrimaryColumn({name:"bridgetxid"})
+    @PrimaryColumn({name:`bridgetxid`})
     public bridgeTxId!:string;
 
     @Index()
-    @Column({name:"chainname"})
+    @Column({name:`chainname`})
     public chainName!:string;
 
     @Index()
-    @Column({name:"chainid"})
+    @Column({name:`chainid`})
     public chainId!:string;
 
     @Index()
-    @Column({name:"blocknumber"})
-    public blockNumber!:number;
+    @Column({name:`blocknum`,unsigned: true})
+    public blockNum!:number;
 
     @Index()
-    @Column({name:"blockid"})
+    @Column({name:`blockid`})
     public blockId!:string;
 
-    @Column({name:"txid"})
+    @Column({name:`txid`})
     public txid!:string;
 
-    @Column({name:"clauseindex"})
+    @Column({name:`clauseindex`,unsigned: true})
     public clauseIndex!:number;
 
-    @Column({name:"index"})
+    @Column({name:`index`,unsigned: true})
     public index!:number;
 
     @Index()
-    @Column({name:"token"})
+    @Column({name:`token`})
     public token!:string;
 
-    @Column({name:"amount"})
+    @Column({name:`amount`})
     public amount!:string;
 
-    @Column({name:"timestamp"})
+    @Column({name:`timestamp`,unsigned: true})
     public timestamp!:number;
 
-    @Column({name:"recipient"})
+    @Column({name:`recipient`})
     public recipient!:string;
 
-    @Column({name:"type"})
+    @Column({name:`type`,unsigned: true})
     public type!:1|2;
 
-    @Column({name:"swaptxhash"})
+    @Column({name:`swaptxhash`})
     @Index()
     public swapTxHash!:string;
 
-    @Column({name:"from"})
+    @Column({name:`from`,nullable:true})
     public from!:string;
 
-    @Column({name:"reward"})
+    @Column({name:`reward`,nullable:true})
     public reward!:string;
 
-    @Column({name:"swapcount"})
+    @Column({name:`swapcount`,nullable:true})
     public swapCount!:string;
 }

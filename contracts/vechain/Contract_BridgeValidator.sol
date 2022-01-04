@@ -10,10 +10,20 @@ contract BridgeValidatorControl {
     address public master;
     address public governance;
     address public bridge;
-    mapping(address => bool) public validators;
-    uint8 public validatorCount;
+    
+    
     uint8 public proposalExp = 30;
     uint8 public proposalSubmitExp = 3;
+
+    struct Validator {
+        bool activate;
+        address prev;
+        address next;
+    }
+    address public firstValidator;
+    address public latestValidator;
+    uint8 public validatorCount;
+    mapping(address => Validator) public validators;
 
     event MasterChanged(address indexed _prev, address indexed _new);
     event ValidatorChanged(address indexed _validator, bool indexed _status);
@@ -42,16 +52,52 @@ contract BridgeValidatorControl {
     }
 
     function addValidator(address _new) external onlyGovernance {
-        require(validators[_new] == false,"The address is alreadly the validator");
-        validators[_new] = true;
+        require(validators[_new].activate == false,"Alreadly in list");
+        Validator memory _newValidator  = Validator({
+            activate:true,
+            prev:address(0),
+            next:address(0)
+        });
+
+        if(firstValidator == address(0)){
+            firstValidator = _new;
+        }
+
+        if(latestValidator != address(0)){
+            validators[latestValidator].next = _new;
+            _newValidator.prev = latestValidator;
+        }
+        latestValidator = _new;
+        validators[_new] = _newValidator;
         validatorCount++;
         emit ValidatorChanged(_new,true);
     }
 
     function removeValidator(address _old) external onlyGovernance {
-        require(validators[_old] == true,"The address is not a validator");
-        validators[_old] = false;
+        require(validators[_old].activate == true,"It's not a validator");
+
+        if(firstValidator == _old){
+            firstValidator = validators[_old].next;
+        }
+
+        if(latestValidator == _old){
+            latestValidator = validators[_old].prev;
+        }
+
+        Validator storage _oldValidator = validators[_old];
+
+        if(_oldValidator.prev != address(0)){
+            validators[_oldValidator.prev].next = _oldValidator.next;
+        }
+        if(_oldValidator.next != address(0)){
+            validators[_oldValidator.next].prev = _oldValidator.prev;
+        }
+
+        _oldValidator.activate = false;
+        _oldValidator.prev = address(0);
+        _oldValidator.next = address(0);
         validatorCount--;
+        
         emit ValidatorChanged(_old,false);
     }
 
