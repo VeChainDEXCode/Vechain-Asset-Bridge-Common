@@ -61,7 +61,7 @@ contract BridgeValidatorControl {
     }
 }
 
-contract BridgeValidator is BridgeValidatorControl {
+contract EthereumBridgeValidator is BridgeValidatorControl {
     mapping(bytes32 => bool) public merkleRootProposals;
 
     event UpdateBridgeMerkleRoot(bytes32 indexed _value);
@@ -69,6 +69,7 @@ contract BridgeValidator is BridgeValidatorControl {
 
     constructor(){
         master = msg.sender;
+        governance = msg.sender;
     }
 
     function updateBridgeMerkleRoot(

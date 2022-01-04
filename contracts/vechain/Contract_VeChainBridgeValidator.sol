@@ -122,7 +122,7 @@ contract BridgeValidatorControl {
     }
 }
 
-contract BridgeValidator is BridgeValidatorControl {
+contract VeChainBridgeValidator is BridgeValidatorControl {
     struct Proposal {
         bool executed;
         uint256 createBlock;
@@ -144,6 +144,7 @@ contract BridgeValidator is BridgeValidatorControl {
 
     constructor() {
         master = msg.sender;
+        governance = msg.sender;
     }
 
     function updateMerkleRoot(

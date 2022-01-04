@@ -13,7 +13,7 @@ interface INativeCoin is IToken {
 }
 
 contract FTokenBridgeControl {
-    address public master;  //Master contract
+    address public master; //Master contract
     address public governance; //Governance contract
     address public validator; //Validator contract
 
@@ -64,7 +64,7 @@ contract FTokenBridgeControl {
     function setGovernance(address _new) external {
         require(
             msg.sender == governance || msg.sender == master,
-            "Permission denied:only master or governance"
+            "Permission denied"
         );
         emit GovernanceChanged(governance, _new);
         governance = _new;
@@ -85,7 +85,7 @@ contract FTokenBridgeControl {
         uint256 _end
     ) external onlyGovernance {
         if (tokens[_token].tokenType == 0) {
-            TokenInfo memory _new = TokenInfo({
+            tokens[_token] = TokenInfo({
                 tokenType: _type,
                 tToken: _ttoken,
                 tChainname: _tchainname,
@@ -104,7 +104,6 @@ contract FTokenBridgeControl {
             }
             
             latestToken = _token;
-            tokens[_token] = _new;
         } else {
             TokenInfo storage info = tokens[_token];
             info.tokenType = _type;
@@ -117,6 +116,35 @@ contract FTokenBridgeControl {
         emit TokenUpdated(
             _token,
             _type,
+            _ttoken,
+            _tchainname,
+            _tchainid,
+            _begin,
+            _end
+        );
+    }
+
+    function setWrappedNativeCoin(
+        address _token,
+        address _ttoken,
+        string calldata _tchainname,
+        string calldata _tchainid,
+        uint256 _begin,
+        uint256 _end
+    ) external onlyGovernance {
+        wrappedNativeCoin = _token;
+        tokens[_token] = TokenInfo({
+            tokenType: ORIGINTOKEN,
+            tToken: _ttoken,
+            tChainname: _tchainname,
+            tChainId: _tchainid,
+            begin: _begin,
+            end: _end,
+            next:address(0)
+        });
+        emit TokenUpdated(
+            _token,
+            ORIGINTOKEN,
             _ttoken,
             _tchainname,
             _tchainid,
@@ -151,17 +179,17 @@ contract FTokenBridgeControl {
     }
 
     modifier onlyGovernance() {
-        require(msg.sender == governance, "Permission denied:only governance");
+        require(msg.sender == governance, "Permission denied");
         _;
     }
 
     modifier onlyMaster() {
-        require(msg.sender == master, "Permission denied:only master");
+        require(msg.sender == master, "Permission denied");
         _;
     }
 
     modifier onlyValidator() {
-        require(msg.sender == validator, "Permission denied:only validator");
+        require(msg.sender == validator, "Permission denied");
         _;
     }
 
@@ -270,10 +298,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         govUnlock
         returns (bool)
     {
-        require(
-            tokens[wrappedNativeCoin].tokenType == ORIGINTOKEN,
-            "token unactivate"
-        );
+        require(this.tokenActivate(wrappedNativeCoin), "Token unactivate");
         IToken token = IToken(wrappedNativeCoin);
 
         uint256 beforeBlance = token.balanceOf(address(this));
@@ -282,7 +307,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
 
         require(
             afterBalance - beforeBlance == msg.value,
-            "transfer balance check faild"
+            "Transfer balance check faild"
         );
 
         (uint256 amountOut, uint256 reward) = amountReward(msg.value);
@@ -316,25 +341,20 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         bytes32 _root,
         bytes32[] calldata _merkleProof
     ) external masterUnlock govUnlock returns (bool) {
-        require(
-            this.tokenActivate(_token),
-            "Token unactivate"
-        );
-
-        TokenInfo memory token = tokens[_token];
+        require(this.tokenActivate(_token), "Token unactivate");
         bytes32 swaphash = keccak256(
             abi.encodePacked(
-                token.tChainname,
-                token.tChainId,
+                tokens[_token].tChainname,
+                tokens[_token].tChainId,
                 _recipient,
-                token.tToken,
+                tokens[_token].tToken,
                 _amount,
                 _swapcount
             )
         );
-        
-        require(proofVerify(_root,swaphash,_merkleProof),"Invalid proof");
-        require(!isClaim(_root,swaphash),"The swap has been claimed");
+
+        require(proofVerify(_root, swaphash, _merkleProof), "Invalid proof");
+        require(!isClaim(_root, swaphash), "The swap has been claimed");
 
         if (tokens[_token].tokenType == ORIGINTOKEN) {
             claimOrginToken(_token, _recipient, _amount);
@@ -345,7 +365,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         }
 
         setClaim(_root, swaphash);
-        emit Claim(_token,_recipient,_amount);
+        emit Claim(_token, _recipient, _amount);
 
         return true;
     }
@@ -360,23 +380,22 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         require(
             tokens[wrappedNativeCoin].tokenType == ORIGINTOKEN ||
                 tokens[wrappedNativeCoin].tokenType == WRAPPEDTOKEN,
-            "native token unactivate"
+            "Native token unactivate"
         );
-
-        TokenInfo memory token = tokens[wrappedNativeCoin];
+        
         bytes32 swaphash = keccak256(
             abi.encodePacked(
-                token.tChainname,
-                token.tChainId,
+                tokens[wrappedNativeCoin].tChainname,
+                tokens[wrappedNativeCoin].tChainId,
                 _recipient,
-                token.tToken,
+                tokens[wrappedNativeCoin].tToken,
                 _amount,
                 _swapcount
             )
         );
 
-       require(proofVerify(_root,swaphash,_merkleProof),"Invalid proof");
-       require(!isClaim(_root,swaphash),"The swap has been claimed");
+        require(proofVerify(_root, swaphash, _merkleProof), "Invalid proof");
+        require(!isClaim(_root, swaphash), "The swap has been claimed");
 
         claimNativeCoin(_recipient, _amount);
         setClaim(_root, swaphash);
@@ -386,22 +405,14 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         return true;
     }
 
-    function transferTokenByMaster(address _token,uint256 _balance,address _recipient) external onlyMaster {
-        if(masterLocked == false){
+    function tokenControlByMaster(address _token,bytes calldata _data) external onlyMaster {
+        require(tokens[_token].tokenType == ORIGINTOKEN || tokens[_token].tokenType == WRAPPEDTOKEN,"The address isn't in tokenlist");
+        if (masterLocked == false) {
             masterLocked = true;
             emit MasterLockChanged(true);
         }
-        IToken token = IToken(_token);
-        require(token.balanceOf(address(this)) <= _balance,"Insufficient balance");
-
-        if (tokens[_token].tokenType == ORIGINTOKEN) {
-            claimOrginToken(_token, _recipient, _balance);
-        }
-
-        if (tokens[_token].tokenType == WRAPPEDTOKEN) {
-            claimWrappedToken(_token, _recipient, _balance);
-        }
-        emit TransaferByMaster(_token,_recipient,_balance);
+        (bool success,bytes memory d) = _token.call(_data);
+        require(success,"execution reverted");
     }
 
     function swapWrappedToken(address _token, uint256 _amount) private {
@@ -410,7 +421,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
 
         require(
             token.allowance(msg.sender, address(this)) >= _amount,
-            "insufficient allowance"
+            "Insufficient allowance"
         );
 
         uint256 beforeBalance = token.balanceOf(address(this));
@@ -418,7 +429,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         uint256 afterBalance = token.balanceOf(address(this));
         require(
             afterBalance - beforeBalance == _amount,
-            "transferFrom balance check faild"
+            "TransferFrom balance check faild"
         );
 
         uint256 beforeBurn = token.balanceOf(address(this));
@@ -434,11 +445,11 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
 
     function swapOriginToken(address _token, uint256 _amount) private {
         IToken token = IToken(_token);
-        require(token.balanceOf(msg.sender) >= _amount, "insufficient balance");
+        require(token.balanceOf(msg.sender) >= _amount, "Insufficient balance");
 
         require(
             token.allowance(msg.sender, address(this)) >= _amount,
-            "insufficient allowance"
+            "Insufficient allowance"
         );
 
         uint256 beforeBlance = token.balanceOf(address(this));
@@ -447,7 +458,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
 
         require(
             afterBalance - beforeBlance == _amount,
-            "transfer balance check faild"
+            "Transfer balance check faild"
         );
     }
 
@@ -473,7 +484,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         return claimed[_root][_swaphash];
     }
 
-    function setClaim(bytes32 _root,bytes32 _swaphash) private{
+    function setClaim(bytes32 _root, bytes32 _swaphash) private {
         claimed[_root][_swaphash] = true;
     }
 
@@ -504,17 +515,14 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         uint256 beforemint = token.balanceOf(address(this));
         token.mint(_balance);
         uint256 aftermint = token.balanceOf(address(this));
-        require(
-            aftermint - beforemint == _balance,
-            "mint balance check faild"
-        );
+        require(aftermint - beforemint == _balance, "Mint balance check faild");
 
         uint256 beforeBalance = token.balanceOf(address(this));
         token.transfer(_recipient, _balance);
         uint256 afterBalance = token.balanceOf(address(this));
         require(
             beforeBalance - afterBalance == _balance,
-            "transfer balance check faild"
+            "Transfer balance check faild"
         );
     }
 
