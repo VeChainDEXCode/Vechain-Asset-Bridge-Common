@@ -8,17 +8,16 @@ import "./Library_Merkle.sol";
 
 interface INativeCoin is IToken {
     function deposit() external payable;
-
     function withdraw(uint256 _amount) external;
 }
 
 contract FTokenBridgeControl {
-    address public master; //Master contract
-    address public governance; //Governance contract
-    address public validator; //Validator contract
+    address public master;
+    address public governance;
+    address public validator;
 
     uint16 public reward = 0; //Range 0-1000 (0‰ - 100‰)
-    address public wrappedNativeCoin;
+    address public wnCoin;
     bool public govLocked = false;
     bool public masterLocked = false;
 
@@ -132,7 +131,7 @@ contract FTokenBridgeControl {
         uint256 _begin,
         uint256 _end
     ) external onlyGovernance {
-        wrappedNativeCoin = _token;
+        wnCoin = _token;
         tokens[_token] = TokenInfo({
             tokenType: ORIGINTOKEN,
             tToken: _ttoken,
@@ -298,11 +297,11 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         govUnlock
         returns (bool)
     {
-        require(this.tokenActivate(wrappedNativeCoin), "Token unactivate");
-        IToken token = IToken(wrappedNativeCoin);
+        require(this.tokenActivate(wnCoin), "Token unactivate");
+        IToken token = IToken(wnCoin);
 
         uint256 beforeBlance = token.balanceOf(address(this));
-        INativeCoin(wrappedNativeCoin).deposit{value: msg.value}();
+        INativeCoin(wnCoin).deposit{value: msg.value}();
         uint256 afterBalance = token.balanceOf(address(this));
 
         require(
@@ -316,14 +315,14 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
                 chainname,
                 chainid,
                 _recipient,
-                wrappedNativeCoin,
+                wnCoin,
                 amountOut,
                 swapCount
             )
         );
         emit SubmitHashEvent(swaphash);
         emit Swap(
-            wrappedNativeCoin,
+            wnCoin,
             msg.sender,
             _recipient,
             amountOut,
@@ -378,17 +377,17 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         bytes32[] calldata _merkleProof
     ) external masterUnlock govUnlock returns (bool) {
         require(
-            tokens[wrappedNativeCoin].tokenType == ORIGINTOKEN ||
-                tokens[wrappedNativeCoin].tokenType == WRAPPEDTOKEN,
+            tokens[wnCoin].tokenType == ORIGINTOKEN ||
+                tokens[wnCoin].tokenType == WRAPPEDTOKEN,
             "Native token unactivate"
         );
         
         bytes32 swaphash = keccak256(
             abi.encodePacked(
-                tokens[wrappedNativeCoin].tChainname,
-                tokens[wrappedNativeCoin].tChainId,
+                tokens[wnCoin].tChainname,
+                tokens[wnCoin].tChainId,
                 _recipient,
-                tokens[wrappedNativeCoin].tToken,
+                tokens[wnCoin].tToken,
                 _amount,
                 _swapcount
             )
@@ -400,7 +399,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         claimNativeCoin(_recipient, _amount);
         setClaim(_root, swaphash);
 
-        emit Claim(wrappedNativeCoin, _recipient, _amount);
+        emit Claim(wnCoin, _recipient, _amount);
 
         return true;
     }
@@ -529,7 +528,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
     function claimNativeCoin(address payable _recipient, uint256 _balance)
         private
     {
-        INativeCoin(wrappedNativeCoin).withdraw(_balance);
+        INativeCoin(wnCoin).withdraw(_balance);
         _recipient.transfer(_balance);
     }
 }

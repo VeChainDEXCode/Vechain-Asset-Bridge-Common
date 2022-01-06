@@ -164,7 +164,7 @@ contract VeChainBridgeValidator is BridgeValidatorControl {
         );
 
         address signer = ECVerify.ecrecovery(_root, _sig);
-        require(validators[signer], "signer isn't a verifier");
+        require(validators[signer].activate == true, "signer isn't a verifier");
 
         if(merkleRootProposals[_root].createBlock == 0){
             Proposal memory _new = Proposal({

@@ -14,7 +14,4 @@ export class ValidatorEntity{
 
     @Column({name:"updateBlock"})
     public updateBlock!:string;
-
-    @Column({name:"valid",type:"boolean",default:true})
-    public valid!:boolean;
 }
