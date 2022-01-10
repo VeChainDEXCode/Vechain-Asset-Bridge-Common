@@ -6,18 +6,44 @@ import "./Interface_Token.sol";
 import "./Interface_TokenExtension.sol";
 import "./Library_Merkle.sol";
 
+struct TokenInfo {
+        uint8 tokenType;
+        address tToken;
+        string tChainname;
+        string tChainId;
+        uint256 begin;
+        uint256 end;
+        address next;
+}
+
 interface INativeCoin is IToken {
     function deposit() external payable;
     function withdraw(uint256 _amount) external;
+}
+
+interface IFTokenStorage {
+    function setToken(
+        address _token,
+        uint8 _type,
+        address _ttoken,
+        string calldata _tchainname,
+        string calldata _tchainid,
+        uint256 _begin,
+        uint256 _end
+    ) external;
+
+    function tokenActivate(address _token) external view returns (bool);
+    function tokens(address _token) external view returns (TokenInfo memory);
 }
 
 contract FTokenBridgeControl {
     address public master;
     address public governance;
     address public validator;
+    address public tokenStorage;
 
     uint16 public reward = 0; //Range 0-1000 (0‰ - 100‰)
-    address public wnCoin;
+    address public wrappedNativeToken;
     bool public govLocked = false;
     bool public masterLocked = false;
 
@@ -29,31 +55,10 @@ contract FTokenBridgeControl {
     event GovernanceChanged(address indexed _prev, address indexed _new);
     event VerifierChanged(address indexed _prev, address indexed _new);
     event RewardChanged(uint16 indexed _prev, uint16 indexed _value);
-    event TokenUpdated(
-        address indexed _tokenAdd,
-        uint8 _type,
-        address _ttoken,
-        string _tchainname,
-        string _tchainid,
-        uint256 _begin,
-        uint256 _end
-    );
+    event TokenUpdated(address indexed _tokenAdd);
     event MasterLockChanged(bool indexed _value);
     event GovLockChanaged(bool indexed _value);
 
-    struct TokenInfo {
-        uint8 tokenType;
-        address tToken;
-        string tChainname;
-        string tChainId;
-        uint256 begin;
-        uint256 end;
-        address next;
-    }
-
-    mapping(address => TokenInfo) public tokens;
-    address public firstToken;
-    address public latestToken;
 
     function setMaster(address _new) external onlyMaster {
         emit MasterChanged(master, _new);
@@ -74,6 +79,14 @@ contract FTokenBridgeControl {
         validator = _new;
     }
 
+    function tokens(address _token) external view returns (TokenInfo memory) {
+        return IFTokenStorage(tokenStorage).tokens(_token);
+    }
+
+    function setTokenStorage(address _new) external onlyMaster {
+        tokenStorage = _new;
+    }
+
     function setToken(
         address _token,
         uint8 _type,
@@ -83,44 +96,8 @@ contract FTokenBridgeControl {
         uint256 _begin,
         uint256 _end
     ) external onlyGovernance {
-        if (tokens[_token].tokenType == 0) {
-            tokens[_token] = TokenInfo({
-                tokenType: _type,
-                tToken: _ttoken,
-                tChainname: _tchainname,
-                tChainId: _tchainid,
-                begin: _begin,
-                end: _end,
-                next:address(0)
-            });
-
-            if(firstToken == address(0)){
-                firstToken = _token;
-            }
-
-            if(latestToken != address(0)){
-                tokens[latestToken].next = _token;
-            }
-            
-            latestToken = _token;
-        } else {
-            TokenInfo storage info = tokens[_token];
-            info.tokenType = _type;
-            info.tToken = _ttoken;
-            info.tChainname = _tchainname;
-            info.tChainId = _tchainid;
-            info.begin = _begin;
-            info.end = _end;
-        }
-        emit TokenUpdated(
-            _token,
-            _type,
-            _ttoken,
-            _tchainname,
-            _tchainid,
-            _begin,
-            _end
-        );
+        IFTokenStorage(tokenStorage).setToken(_token, _type, _ttoken, _tchainname, _tchainid, _begin, _end);
+        emit TokenUpdated(_token);
     }
 
     function setWrappedNativeCoin(
@@ -131,34 +108,13 @@ contract FTokenBridgeControl {
         uint256 _begin,
         uint256 _end
     ) external onlyGovernance {
-        wnCoin = _token;
-        tokens[_token] = TokenInfo({
-            tokenType: ORIGINTOKEN,
-            tToken: _ttoken,
-            tChainname: _tchainname,
-            tChainId: _tchainid,
-            begin: _begin,
-            end: _end,
-            next:address(0)
-        });
-        emit TokenUpdated(
-            _token,
-            ORIGINTOKEN,
-            _ttoken,
-            _tchainname,
-            _tchainid,
-            _begin,
-            _end
-        );
+        wrappedNativeToken = _token;
+        IFTokenStorage(tokenStorage).setToken(_token, ORIGINTOKEN, _ttoken, _tchainname, _tchainid, _begin, _end);
+        emit TokenUpdated(_token);
     }
 
     function tokenActivate(address _token) external view returns (bool) {
-        return
-            (tokens[_token].tokenType == ORIGINTOKEN ||
-                tokens[_token].tokenType == WRAPPEDTOKEN) &&
-            (tokens[_token].begin <= block.number &&
-                (tokens[_token].end >= block.number ||
-                    tokens[_token].end == 0));
+        return IFTokenStorage(tokenStorage).tokenActivate(_token);
     }
 
     function setReward(uint16 _reward) external onlyGovernance {
@@ -266,13 +222,16 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
     ) external masterUnlock govUnlock returns (bool) {
         require(this.tokenActivate(_token), "The token unactivate");
 
-        if (tokens[_token].tokenType == ORIGINTOKEN) {
+        TokenInfo memory token = IFTokenStorage(tokenStorage).tokens(_token);
+
+        if (token.tokenType == ORIGINTOKEN) {
             swapOriginToken(_token, _amount);
         }
 
-        if (tokens[_token].tokenType == WRAPPEDTOKEN) {
+        if (token.tokenType == WRAPPEDTOKEN) {
             swapWrappedToken(_token, _amount);
         }
+
         swapCount++;
         (uint256 amountOut, uint256 reward) = amountReward(_amount);
         bytes32 swaphash = keccak256(
@@ -297,11 +256,11 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         govUnlock
         returns (bool)
     {
-        require(this.tokenActivate(wnCoin), "Token unactivate");
-        IToken token = IToken(wnCoin);
+        require(this.tokenActivate(wrappedNativeToken), "Token unactivate");
+        IToken token = IToken(wrappedNativeToken);
 
         uint256 beforeBlance = token.balanceOf(address(this));
-        INativeCoin(wnCoin).deposit{value: msg.value}();
+        INativeCoin(wrappedNativeToken).deposit{value: msg.value}();
         uint256 afterBalance = token.balanceOf(address(this));
 
         require(
@@ -315,20 +274,13 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
                 chainname,
                 chainid,
                 _recipient,
-                wnCoin,
+                wrappedNativeToken,
                 amountOut,
                 swapCount
             )
         );
         emit SubmitHashEvent(swaphash);
-        emit Swap(
-            wnCoin,
-            msg.sender,
-            _recipient,
-            amountOut,
-            reward,
-            swapCount
-        );
+        emit Swap(wrappedNativeToken, msg.sender, _recipient, amountOut, reward, swapCount);
         return true;
     }
 
@@ -341,12 +293,14 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         bytes32[] calldata _merkleProof
     ) external masterUnlock govUnlock returns (bool) {
         require(this.tokenActivate(_token), "Token unactivate");
+        TokenInfo memory token = IFTokenStorage(tokenStorage).tokens(_token);
+
         bytes32 swaphash = keccak256(
             abi.encodePacked(
-                tokens[_token].tChainname,
-                tokens[_token].tChainId,
+                token.tChainname,
+                token.tChainId,
                 _recipient,
-                tokens[_token].tToken,
+                token.tToken,
                 _amount,
                 _swapcount
             )
@@ -355,11 +309,11 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         require(proofVerify(_root, swaphash, _merkleProof), "Invalid proof");
         require(!isClaim(_root, swaphash), "The swap has been claimed");
 
-        if (tokens[_token].tokenType == ORIGINTOKEN) {
+        if (token.tokenType == ORIGINTOKEN) {
             claimOrginToken(_token, _recipient, _amount);
         }
 
-        if (tokens[_token].tokenType == WRAPPEDTOKEN) {
+        if (token.tokenType == WRAPPEDTOKEN) {
             claimWrappedToken(_token, _recipient, _amount);
         }
 
@@ -376,18 +330,20 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         bytes32 _root,
         bytes32[] calldata _merkleProof
     ) external masterUnlock govUnlock returns (bool) {
+        TokenInfo memory token = IFTokenStorage(tokenStorage).tokens(wrappedNativeToken);
+
         require(
-            tokens[wnCoin].tokenType == ORIGINTOKEN ||
-                tokens[wnCoin].tokenType == WRAPPEDTOKEN,
+            token.tokenType == ORIGINTOKEN ||
+                token.tokenType == WRAPPEDTOKEN,
             "Native token unactivate"
         );
-        
+
         bytes32 swaphash = keccak256(
             abi.encodePacked(
-                tokens[wnCoin].tChainname,
-                tokens[wnCoin].tChainId,
+                token.tChainname,
+                token.tChainId,
                 _recipient,
-                tokens[wnCoin].tToken,
+                token.tToken,
                 _amount,
                 _swapcount
             )
@@ -399,19 +355,28 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         claimNativeCoin(_recipient, _amount);
         setClaim(_root, swaphash);
 
-        emit Claim(wnCoin, _recipient, _amount);
+        emit Claim(wrappedNativeToken, _recipient, _amount);
 
         return true;
     }
 
-    function tokenControlByMaster(address _token,bytes calldata _data) external onlyMaster {
-        require(tokens[_token].tokenType == ORIGINTOKEN || tokens[_token].tokenType == WRAPPEDTOKEN,"The address isn't in tokenlist");
+    function tokenControlByMaster(address _token, bytes calldata _data)
+        external
+        onlyMaster
+    {
+        TokenInfo memory token = IFTokenStorage(tokenStorage).tokens(wrappedNativeToken);
+
+        require(
+            token.tokenType == ORIGINTOKEN ||
+                token.tokenType == WRAPPEDTOKEN,
+            "The address isn't in tokenlist"
+        );
         if (masterLocked == false) {
             masterLocked = true;
             emit MasterLockChanged(true);
         }
-        (bool success,bytes memory d) = _token.call(_data);
-        require(success,"execution reverted");
+        (bool success, bytes memory d) = _token.call(_data);
+        require(success, "execution reverted");
     }
 
     function swapWrappedToken(address _token, uint256 _amount) private {
@@ -528,7 +493,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
     function claimNativeCoin(address payable _recipient, uint256 _balance)
         private
     {
-        INativeCoin(wnCoin).withdraw(_balance);
+        INativeCoin(wrappedNativeToken).withdraw(_balance);
         _recipient.transfer(_balance);
     }
 }
