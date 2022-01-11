@@ -34,10 +34,10 @@ export function swapTxHash(tx:SwapBridgeTx):string {
     let buff = Buffer.concat([
         Buffer.from(tx.chainName),
         Buffer.from(tx.chainId),
-        Buffer.from(tx.recipient),
-        Buffer.from(tx.token),
-        Buffer.from(tx.amount.toString(16),'hex'),
-        Buffer.from(tx.swapCount.toString(16),'hex'),
+        Buffer.from(tx.recipient.substring(2),'hex'),
+        Buffer.from(tx.token.substring(2),'hex'),
+        Buffer.from((tx.amount - tx.reward).toString(16).padStart(64,'0'),'hex'),
+        Buffer.from(tx.swapCount.toString(16).padStart(64,'0'),'hex'),
     ]);
     return '0x' + keccak256(buff).toString('hex');
 }

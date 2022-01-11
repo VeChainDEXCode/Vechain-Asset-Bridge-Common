@@ -7,17 +7,18 @@ import "./Interface_TokenExtension.sol";
 import "./Library_Merkle.sol";
 
 struct TokenInfo {
-        uint8 tokenType;
-        address tToken;
-        string tChainname;
-        string tChainId;
-        uint256 begin;
-        uint256 end;
-        address next;
+    uint8 tokenType;
+    address tToken;
+    string tChainname;
+    string tChainId;
+    uint256 begin;
+    uint256 end;
+    address next;
 }
 
 interface INativeCoin is IToken {
     function deposit() external payable;
+
     function withdraw(uint256 _amount) external;
 }
 
@@ -33,7 +34,8 @@ interface IFTokenStorage {
     ) external;
 
     function tokenActivate(address _token) external view returns (bool);
-    function tokens(address _token) external view returns (TokenInfo memory);
+
+    function getToken(address _token) external view returns(TokenInfo memory);
 }
 
 contract FTokenBridgeControl {
@@ -59,7 +61,6 @@ contract FTokenBridgeControl {
     event MasterLockChanged(bool indexed _value);
     event GovLockChanaged(bool indexed _value);
 
-
     function setMaster(address _new) external onlyMaster {
         emit MasterChanged(master, _new);
         master = _new;
@@ -80,7 +81,7 @@ contract FTokenBridgeControl {
     }
 
     function tokens(address _token) external view returns (TokenInfo memory) {
-        return IFTokenStorage(tokenStorage).tokens(_token);
+        return IFTokenStorage(tokenStorage).getToken(_token);
     }
 
     function setTokenStorage(address _new) external onlyMaster {
@@ -96,7 +97,15 @@ contract FTokenBridgeControl {
         uint256 _begin,
         uint256 _end
     ) external onlyGovernance {
-        IFTokenStorage(tokenStorage).setToken(_token, _type, _ttoken, _tchainname, _tchainid, _begin, _end);
+        IFTokenStorage(tokenStorage).setToken(
+            _token,
+            _type,
+            _ttoken,
+            _tchainname,
+            _tchainid,
+            _begin,
+            _end
+        );
         emit TokenUpdated(_token);
     }
 
@@ -109,7 +118,15 @@ contract FTokenBridgeControl {
         uint256 _end
     ) external onlyGovernance {
         wrappedNativeToken = _token;
-        IFTokenStorage(tokenStorage).setToken(_token, ORIGINTOKEN, _ttoken, _tchainname, _tchainid, _begin, _end);
+        IFTokenStorage(tokenStorage).setToken(
+            _token,
+            ORIGINTOKEN,
+            _ttoken,
+            _tchainname,
+            _tchainid,
+            _begin,
+            _end
+        );
         emit TokenUpdated(_token);
     }
 
@@ -188,6 +205,10 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         uint256 _amount
     );
 
+    receive() external payable {}
+
+    fallback() external payable {}
+
     constructor(string memory _chainname, string memory _chainid) {
         chainname = _chainname;
         chainid = _chainid;
@@ -206,6 +227,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         emit UpdateMerkleRoot(_root, _args);
     }
 
+
     function proofVerify(
         bytes32 _root,
         bytes32 _leaf,
@@ -222,7 +244,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
     ) external masterUnlock govUnlock returns (bool) {
         require(this.tokenActivate(_token), "The token unactivate");
 
-        TokenInfo memory token = IFTokenStorage(tokenStorage).tokens(_token);
+        TokenInfo memory token = IFTokenStorage(tokenStorage).getToken(_token);
 
         if (token.tokenType == ORIGINTOKEN) {
             swapOriginToken(_token, _amount);
@@ -280,7 +302,14 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
             )
         );
         emit SubmitHashEvent(swaphash);
-        emit Swap(wrappedNativeToken, msg.sender, _recipient, amountOut, reward, swapCount);
+        emit Swap(
+            wrappedNativeToken,
+            msg.sender,
+            _recipient,
+            amountOut,
+            reward,
+            swapCount
+        );
         return true;
     }
 
@@ -293,7 +322,7 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         bytes32[] calldata _merkleProof
     ) external masterUnlock govUnlock returns (bool) {
         require(this.tokenActivate(_token), "Token unactivate");
-        TokenInfo memory token = IFTokenStorage(tokenStorage).tokens(_token);
+        TokenInfo memory token = IFTokenStorage(tokenStorage).getToken(_token);
 
         bytes32 swaphash = keccak256(
             abi.encodePacked(
@@ -330,11 +359,12 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         bytes32 _root,
         bytes32[] calldata _merkleProof
     ) external masterUnlock govUnlock returns (bool) {
-        TokenInfo memory token = IFTokenStorage(tokenStorage).tokens(wrappedNativeToken);
+        TokenInfo memory token = IFTokenStorage(tokenStorage).getToken(
+            wrappedNativeToken
+        );
 
         require(
-            token.tokenType == ORIGINTOKEN ||
-                token.tokenType == WRAPPEDTOKEN,
+            token.tokenType == ORIGINTOKEN || token.tokenType == WRAPPEDTOKEN,
             "Native token unactivate"
         );
 
@@ -364,11 +394,12 @@ contract FTokenBridge is FTokenBridgeControl, IBridge {
         external
         onlyMaster
     {
-        TokenInfo memory token = IFTokenStorage(tokenStorage).tokens(wrappedNativeToken);
+        TokenInfo memory token = IFTokenStorage(tokenStorage).getToken(
+            wrappedNativeToken
+        );
 
         require(
-            token.tokenType == ORIGINTOKEN ||
-                token.tokenType == WRAPPEDTOKEN,
+            token.tokenType == ORIGINTOKEN || token.tokenType == WRAPPEDTOKEN,
             "The address isn't in tokenlist"
         );
         if (masterLocked == false) {

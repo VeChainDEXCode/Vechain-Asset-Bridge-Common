@@ -79,4 +79,9 @@ contract FTokenStorage {
                 (tokens[_token].end >= block.number ||
                     tokens[_token].end == 0));
     }
+
+    function getToken(address _token) external view returns(TokenInfo memory) {
+        require(tokens[_token].tToken != address(0),"Token not exist");
+        return tokens[_token];
+    }
 }

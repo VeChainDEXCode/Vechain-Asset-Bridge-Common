@@ -3,8 +3,6 @@ import { ActionResult } from "./utils/components/actionResult";
 import MerkleTree, { TreeNode } from "./utils/merkleTree";
 import { BridgeSnapshoot, ChainInfo } from "./utils/types/bridgeSnapshoot";
 import { SwapBridgeTx, swapTxHash } from "./utils/types/bridgeTx";
-const sortArray = require('sort-array');
-const Copy = require('object-copy');
 
 export default class BridgeStorage {
 
@@ -19,13 +17,13 @@ export default class BridgeStorage {
     public buildTree(newSnapshoot:BridgeSnapshoot,txs:SwapBridgeTx[]):TreeNode {
         this.tree = MerkleTree.createNewTree();
         const sorted:Array<SwapBridgeTx> = txs.sort((l,r) => {
-            return BigInt(l.bridgeTxId) > BigInt(r.bridgeTxId) ? 1 : -1;
+            return BigInt(l.swapTxHash) > BigInt(r.swapTxHash) ? 1 : -1;
         });
         
         let infoHash = BridgeStorage.snapshootHash(newSnapshoot.chains);
         this.tree.addHash(infoHash);
         sorted.forEach(tx => {
-            this.tree.addHash(tx.bridgeTxId);
+            this.tree.addHash(tx.swapTxHash);
         });
 
         this.merkleRootNode = this.tree.buildTree();
@@ -36,15 +34,22 @@ export default class BridgeStorage {
         return this.merkleRootNode.nodeHash;
     }
 
+    public getMerkleProof(swapTxHash:string):Array<string>{
+        return this.tree.getMerkleProof(swapTxHash);
+    }
+
     public static verificationMerkleProof(swaptx:SwapBridgeTx,root:string,proof:Array<string>):boolean{
         let leafHash = swapTxHash(swaptx);
         return MerkleTree.verificationMerkleProof(leafHash,root,proof);
     }
 
     public static snapshootEncodePacked(chains:ChainInfo[]):Buffer {
-        let sorted:Array<ChainInfo> = sortArray(chains,{
-            by:['chainName','chainId'],
-            order:'asc'
+        let sorted = chains.sort((l,r) => {
+            if(l.chainName.toLocaleLowerCase() != r.chainName.toLocaleLowerCase()){
+                return l.chainName > r.chainName ? 1 : -1 ;
+            } else {
+                return l.chainId >= r.chainId ? 1 : -1 ;
+            }
         });
 
         let encode:Buffer = Buffer.alloc(0);
