@@ -14,7 +14,7 @@ export default class BridgeStorage {
         this.merkleRootNode = TreeNode.EmptyTreeNode();
     }
 
-    public buildTree(newSnapshoot:BridgeSnapshoot,txs:SwapBridgeTx[]):TreeNode {
+    public buildTree(appid:string,newSnapshoot:BridgeSnapshoot,txs:SwapBridgeTx[]):TreeNode {
         this.tree = MerkleTree.createNewTree();
         const sorted:Array<SwapBridgeTx> = txs.sort((l,r) => {
             return BigInt(l.swapTxHash) > BigInt(r.swapTxHash) ? 1 : -1;
@@ -22,12 +22,21 @@ export default class BridgeStorage {
         
         let infoHash = BridgeStorage.snapshootHash(newSnapshoot.chains);
         this.tree.addHash(infoHash);
+
         sorted.forEach(tx => {
-            this.tree.addHash(tx.swapTxHash);
+            this.tree.addHash(BridgeStorage.leaf(appid,tx.swapTxHash));
         });
 
         this.merkleRootNode = this.tree.buildTree();
         return this.merkleRootNode;
+    }
+
+    public static leaf(appid:string,swapTxHash:string):string {
+        const buff = Buffer.concat([
+            Buffer.from(appid.substring(2),'hex'),
+            Buffer.from(swapTxHash.substring(2),'hex')
+        ]);
+        return '0x' + keccak256(buff).toString('hex');
     }
 
     public getMerkleRoot():string{
