@@ -3,7 +3,10 @@ pragma experimental ABIEncoderV2;
 
 import "../common/Library_ECVerify.sol";
 import "../common/Library_Array.sol";
-import "../common/Interface_Bridge.sol";
+
+interface IBridgeCore {
+    function updateMerkleRoot(bytes32 _root, bytes calldata _args) external;
+}
 
 contract BridgeValidatorControl {
     address public master;
@@ -74,30 +77,31 @@ contract EthereumBridgeValidator is BridgeValidatorControl {
 
     function updateBridgeMerkleRoot(
         bytes32 _root,
-        bytes[] calldata _args,
+        bytes calldata _args,
         bytes[] calldata _sigs,
         uint _blockRef,
         uint _expirnum
     ) external {
         require(expiration(_blockRef,_expirnum),"the transaction already expired");
 
-        require(merkleRootProposals[_root] == false,"the operation had executed");
+        bytes32 khash = keccak256(abi.encodePacked(_root,_args));
+        require(merkleRootProposals[khash] == false,"the operation had executed");
 
-        IBridge bridge = IBridge(bridge);
+        IBridgeCore bridge = IBridgeCore(bridge);
         uint8 limit = quorum(validatorCount);
         require(_sigs.length + 1 >= limit, "Insufficient number of signatures");
 
         address[] memory signers = new address[](_sigs.length);
         for (uint8 i = 0; i < _sigs.length; i++) {
-            address signer = ECVerify.ecrecovery(_root, _sigs[i]);
+            address signer = ECVerify.ecrecovery(khash, _sigs[i]);
             require(validators[signer], "signer isn't a verifier");
             require(ArrayLib.addressExist(signers,signer) == false,"signer had approved");
             signers[i] = signer;
             emit UpdateBridgeMerkleRoot(_root);
             if (i + 1 >= limit) {
-                bridge.updateMerkleRoot(_root,_args);
-                merkleRootProposals[_root] = true;
-                emit ExecOperation(_root);
+                bridge.updateMerkleRoot(_root,new bytes(0));
+                merkleRootProposals[khash] = true;
+                emit ExecOperation(khash);
                 break;
             }
         }

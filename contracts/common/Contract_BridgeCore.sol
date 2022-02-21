@@ -94,8 +94,13 @@ contract BridgeCore is BridgeCoreControl {
     mapping(bytes32 => address) public appids;
     uint256 public appCount = 0;
 
+    struct RootInfo {
+        uint256 index;
+        bytes args;
+    }
+
     bytes32[] public rootList;
-    mapping(bytes32 => uint256) public rootIndex;
+    mapping(bytes32 => RootInfo) public rootInfo;
 
     event NewAppid(bytes32 indexed _appid);
     event UpdateAdmin(
@@ -105,15 +110,15 @@ contract BridgeCore is BridgeCoreControl {
     );
     event AddContract(bytes32 indexed _appid, address indexed _addr);
     event DelContract(bytes32 indexed _appid, address indexed _addr);
-    event SubmitHashEvent(bytes32 indexed _appid, bytes32 indexed _value);
-    event UpdateMerkleRoot(bytes32 indexed _root, bytes[] _args);
+    event SubmitHashEvent(bytes32 indexed _appid, address indexed _sender,bytes32 indexed _value);
+    event UpdateMerkleRoot(bytes32 indexed _root, bytes _args);
 
     constructor(string memory _chainname, string memory _chainid) {
         chainname = _chainname;
         chainid = _chainid;
         master = msg.sender;
         governance = msg.sender;
-        rootIndex[bytes32(0)] = rootList.length;
+        rootInfo[bytes32(0)] = RootInfo(0,new bytes(0));
         rootList.push(bytes32(0));
     }
 
@@ -172,16 +177,16 @@ contract BridgeCore is BridgeCoreControl {
     function submitHash(bytes32 _appid, bytes32 _hash) external {
         require(appids[_appid] != address(0), "Appid not exists");
         require(contractMap[msg.sender] == _appid, "Permission denied");
-        emit SubmitHashEvent(_appid, _hash);
+        emit SubmitHashEvent(_appid,msg.sender,_hash);
     }
 
-    function updateMerkleRoot(bytes32 _root, bytes[] calldata _args)
+    function updateMerkleRoot(bytes32 _root, bytes calldata _args)
         external
         onlyValidator
         masterUnlock
         govUnlock
     {
-        rootIndex[_root] = rootList.length;
+        rootInfo[_root] = RootInfo(rootList.length,_args);
         rootList.push(_root);
         emit UpdateMerkleRoot(_root, _args);
     }
@@ -192,7 +197,7 @@ contract BridgeCore is BridgeCoreControl {
         bytes32 _hash,
         bytes32[] calldata _proof
     ) external view returns (bool) {
-        require(rootIndex[_root] != 0, "Merkleroot invalid");
+        require(rootInfo[_root].index != 0, "Merkleroot invalid");
         bytes32 leaf = keccak256(abi.encodePacked(_appid, _hash));
         return MerkleProof.verify(_proof, _root, leaf);
     }

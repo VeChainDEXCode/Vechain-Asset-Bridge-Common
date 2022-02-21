@@ -1,8 +1,8 @@
 import { keccak256 } from "thor-devkit";
-import { ActionResult } from "./utils/components/actionResult";
-import MerkleTree, { TreeNode } from "./utils/merkleTree";
-import { BridgeSnapshoot, ChainInfo } from "./utils/types/bridgeSnapshoot";
-import { SwapBridgeTx, swapTxHash } from "./utils/types/bridgeTx";
+import { ActionResult } from "./components/actionResult";
+import MerkleTree, { TreeNode } from "./merkleTree";
+import { BridgeSnapshoot, ChainInfo } from "./types/bridgeSnapshoot";
+import { SwapBridgeTx, swapTxHash } from "./types/bridgeTx";
 
 export default class BridgeStorage {
 

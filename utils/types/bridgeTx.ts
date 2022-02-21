@@ -12,7 +12,6 @@ export type BaseBridgeTx = {
     blockNumber:number;
     blockId:string;
     txid:string;
-    clauseIndex:number;
     index:number;
     token:string;
     amount:bigint;
@@ -25,6 +24,7 @@ export type SwapBridgeTx = BaseBridgeTx & {
     swapTxHash:string;
     from:string;
     reward:bigint;
+    amountOut:bigint;
     swapCount:bigint
 }
 
@@ -48,7 +48,6 @@ export function bridgeTxId(tx:BaseBridgeTx):string {
         Buffer.from(tx.chainId),
         Buffer.from(tx.blockId.substring(2),'hex'),
         Buffer.from(tx.txid.substring(2),'hex'),
-        Buffer.from(BigInt(tx.clauseIndex).toString(16),'hex'),
         Buffer.from(BigInt(tx.index).toString(16),'hex'),
     ]);
     return '0x' + keccak256(buff).toString('hex');

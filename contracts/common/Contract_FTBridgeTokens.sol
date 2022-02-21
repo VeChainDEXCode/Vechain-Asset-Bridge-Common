@@ -23,7 +23,6 @@ struct TokenInfo {
 
 contract FTBridgeTokens {
     address public bridgeControl;
-
     address public wrappedNativeToken;
     uint8 public constant ORIGINTOKEN = 1;
     uint8 public constant WRAPPEDTOKEN = 2;

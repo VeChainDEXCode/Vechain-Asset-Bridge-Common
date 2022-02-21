@@ -4,7 +4,10 @@ pragma experimental ABIEncoderV2;
 
 import "../common/Library_ECVerify.sol";
 import "../common/Library_Array.sol";
-import "../common/Interface_Bridge.sol";
+
+interface IBridgeCore {
+    function updateMerkleRoot(bytes32 _root, bytes calldata _args) external;
+}
 
 contract BridgeValidatorControl {
     address public master;
@@ -15,15 +18,8 @@ contract BridgeValidatorControl {
     uint8 public proposalExp = 30;
     uint8 public proposalSubmitExp = 3;
 
-    struct Validator {
-        bool activate;
-        address prev;
-        address next;
-    }
-    address public firstValidator;
-    address public latestValidator;
     uint8 public validatorCount;
-    mapping(address => Validator) public validators;
+    mapping(address => bool) public validators;
 
     event MasterChanged(address indexed _prev, address indexed _new);
     event ValidatorChanged(address indexed _validator, bool indexed _status);
@@ -52,52 +48,16 @@ contract BridgeValidatorControl {
     }
 
     function addValidator(address _new) external onlyGovernance {
-        require(validators[_new].activate == false,"Alreadly in list");
-        Validator memory _newValidator  = Validator({
-            activate:true,
-            prev:address(0),
-            next:address(0)
-        });
-
-        if(firstValidator == address(0)){
-            firstValidator = _new;
-        }
-
-        if(latestValidator != address(0)){
-            validators[latestValidator].next = _new;
-            _newValidator.prev = latestValidator;
-        }
-        latestValidator = _new;
-        validators[_new] = _newValidator;
+        require(validators[_new] == false,"Alreadly in list");
+        validators[_new] = true;
         validatorCount++;
         emit ValidatorChanged(_new,true);
     }
 
     function removeValidator(address _old) external onlyGovernance {
-        require(validators[_old].activate == true,"It's not a validator");
-
-        if(firstValidator == _old){
-            firstValidator = validators[_old].next;
-        }
-
-        if(latestValidator == _old){
-            latestValidator = validators[_old].prev;
-        }
-
-        Validator storage _oldValidator = validators[_old];
-
-        if(_oldValidator.prev != address(0)){
-            validators[_oldValidator.prev].next = _oldValidator.next;
-        }
-        if(_oldValidator.next != address(0)){
-            validators[_oldValidator.next].prev = _oldValidator.prev;
-        }
-
-        _oldValidator.activate = false;
-        _oldValidator.prev = address(0);
-        _oldValidator.next = address(0);
+        require(validators[_old] == true,"It's not a validator");
+        validators[_old] = false;
         validatorCount--;
-        
         emit ValidatorChanged(_old,false);
     }
 
@@ -128,7 +88,7 @@ contract VeChainBridgeValidator is BridgeValidatorControl {
         uint256 createBlock;
         uint256 executblock;
         bytes32 root;
-        bytes[] args;
+        bytes args;
         bytes[] signatures;
     }
 
@@ -149,24 +109,26 @@ contract VeChainBridgeValidator is BridgeValidatorControl {
 
     function updateMerkleRoot(
         bytes32 _root,
-        bytes[] calldata _args,
+        bytes calldata _args,
         bytes calldata _sig
     ) external returns(bool){
         
+        bytes32 khash = keccak256(abi.encodePacked(_root,_args));
+
         require(
-            block.number - merkleRootProposals[_root].createBlock <= proposalExp,
+            block.number - merkleRootProposals[khash].createBlock <= proposalExp,
             "the proposal had expired"
         );
 
         require(
-            merkleRootProposals[_root].executed == false || (merkleRootProposals[_root].executed == true && block.number - merkleRootProposals[_root].executblock <= proposalSubmitExp),
+            merkleRootProposals[khash].executed == false || (merkleRootProposals[khash].executed == true && block.number - merkleRootProposals[khash].executblock <= proposalSubmitExp),
             "the proposal had executed or submit expired"
         );
 
-        address signer = ECVerify.ecrecovery(_root, _sig);
-        require(validators[signer].activate == true, "signer isn't a verifier");
+        address signer = ECVerify.ecrecovery(khash, _sig);
+        require(validators[signer] == true, "signer isn't a verifier");
 
-        if(merkleRootProposals[_root].createBlock == 0){
+        if(merkleRootProposals[khash].createBlock == 0){
             Proposal memory _new = Proposal({
                 executed:false,
                 createBlock:block.number,
@@ -175,9 +137,9 @@ contract VeChainBridgeValidator is BridgeValidatorControl {
                 args:_args,
                 signatures: new bytes[](0)
             });
-            merkleRootProposals[_root] = _new;
+            merkleRootProposals[khash] = _new;
         }
-        Proposal storage prop = merkleRootProposals[_root];
+        Proposal storage prop = merkleRootProposals[khash];
 
         require(
             ArrayLib.bytesExists(prop.signatures, _sig) == false,
@@ -186,22 +148,23 @@ contract VeChainBridgeValidator is BridgeValidatorControl {
         prop.signatures.push(_sig);
         emit SubmitUpdateRoot(_root, signer, _sig);
 
-        if (merkleRootProposals[_root].signatures.length >= quorum(validatorCount) && prop.executed == false) {
-            IBridge bri = IBridge(bridge);
-            bri.updateMerkleRoot(_root, merkleRootProposals[_root].args);
+        if (merkleRootProposals[khash].signatures.length >= quorum(validatorCount) && prop.executed == false) {
+            IBridgeCore bri = IBridgeCore(bridge);
+            bri.updateMerkleRoot(_root, merkleRootProposals[khash].args);
             prop.executed = true;
             prop.executblock = block.number;
-            emit ExecOpertion(_root);
+            emit ExecOpertion(khash);
         }
         return true;
     }
 
-    function getMerkleRootProposal(bytes32 _root)
+    function getMerkleRootProposal(bytes32 _root,bytes calldata _args)
         external
         view
         returns (Proposal memory) 
     {
-        return merkleRootProposals[_root];
+        bytes32 khash = keccak256(abi.encodePacked(_root,_args));
+        return merkleRootProposals[khash];
     }
 
     function quorum(uint8 total) internal pure returns (uint8) {

@@ -1,7 +1,7 @@
 import Web3 from "web3";
-import { ActionData } from "./utils/components/actionResult";
-import { sleep } from "./utils/sleep";
-import { BlockIndex } from "./utils/types/blockIndex";
+import { ActionData } from "../utils/components/actionResult";
+import { sleep } from "../utils/sleep";
+import { BlockIndex } from "../utils/types/blockIndex";
 
 export class EthereumCommon {
     constructor(env:any){

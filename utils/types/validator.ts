@@ -1,6 +1,6 @@
 export type Validator = {
     validator:string;
-    status:boolean;
-    update:number;
-    updateBlock:string;
+    activate:boolean;
+    updateBlockNum:number;
+    updateBlockId:string;
 }

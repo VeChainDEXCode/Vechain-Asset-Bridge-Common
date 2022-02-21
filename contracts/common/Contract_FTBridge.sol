@@ -14,7 +14,6 @@ struct TokenInfo {
         uint16 reward;
         }
 
-
 interface iBridgeCore {
     function submitHash(bytes32 _appid,bytes32 _hash) external;
     function proofVerify(bytes32 _root,bytes32 _appid,bytes32 _hash,bytes32[] calldata _proof) external view returns(bool);
@@ -131,12 +130,15 @@ contract FTBridge {
         require(IFTBridgeTokens(bridgeTokens).tokenActivate(wrappedNativeToken), "The token is not activated");
 
         INativeCoin token = INativeCoin(wrappedNativeToken);
+
         uint256 beforeBlance = token.balanceOf(address(this));
+        uint256 beforeNativeBalance = address(this).balance;
         token.deposit{value: msg.value}();
         uint256 afterBalance = token.balanceOf(address(this));
+        uint256 afterNativeBalance = address(this).balance;
 
         require(
-            afterBalance - beforeBlance == msg.value,
+            afterBalance - beforeBlance == msg.value && beforeNativeBalance - afterNativeBalance == msg.value,
             "Transfer balance check faild"
         );
 
@@ -195,9 +197,22 @@ contract FTBridge {
         require(iBridgeCore(bridgeCore).proofVerify(_root, appid, swaphash, _merkleProof), "Invalid proof");
         require(!isClaim(_root, swaphash), "The swap has been claimed");
 
-        INativeCoin(wrappedNativeToken).withdraw(_amount);
+        INativeCoin token = INativeCoin(wrappedNativeToken);
+
+        uint256 beforeBlance = token.balanceOf(address(this));
+        uint256 beforeNativeBalance = address(this).balance;
+        token.withdraw(_amount);
+        uint256 afterBalance = token.balanceOf(address(this));
+        uint256 afterNativeBalance = address(this).balance;
+
+        require(
+            beforeBlance - afterBalance == _amount && afterNativeBalance - beforeNativeBalance == _amount,
+            "Transfer balance check faild"
+        );
+
         _recipient.transfer(_amount);
 
+        claimed[_root][swaphash] = true;
         emit Claim(wrappedNativeToken, _recipient, _amount);
         return true;
     }

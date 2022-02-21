@@ -1,6 +1,6 @@
 import { Framework } from "@vechain/connex-framework";
-import { ActionData, ActionResult } from "./utils/components/actionResult";
-import { BlockIndex } from "./utils/types/blockIndex";
+import { ActionData, ActionResult } from "../utils/components/actionResult";
+import { BlockIndex } from "../utils/types/blockIndex";
 
 export class VeChainCommon {
     constructor(env:any){
@@ -131,4 +131,19 @@ export class VeChainCommon {
     private env:any;
     private config:any;
     private connex:Framework;
+}
+
+export async function getAllEvents(filter:Connex.Thor.Filter<'event'>):Promise<Connex.Thor.Filter.Row<'event'>[]>{
+    let result = new Array<Connex.Thor.Filter.Row<'event'>>();
+    let offset = 0;
+    while(true){
+        const events = await filter.apply(offset,200);
+        result = result.concat(events);
+        if(events.length == 200){
+            offset = offset + 200;
+            continue;
+        }
+        break;
+    }
+    return result;
 }
