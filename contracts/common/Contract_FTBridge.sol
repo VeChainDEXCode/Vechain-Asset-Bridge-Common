@@ -200,13 +200,11 @@ contract FTBridge {
         INativeCoin token = INativeCoin(wrappedNativeToken);
 
         uint256 beforeBlance = token.balanceOf(address(this));
-        uint256 beforeNativeBalance = address(this).balance;
         token.withdraw(_amount);
         uint256 afterBalance = token.balanceOf(address(this));
-        uint256 afterNativeBalance = address(this).balance;
 
         require(
-            beforeBlance - afterBalance == _amount && afterNativeBalance - beforeNativeBalance == _amount,
+            beforeBlance - afterBalance == _amount,
             "Transfer balance check faild"
         );
 

@@ -102,7 +102,7 @@ contract BridgeCore is BridgeCoreControl {
     bytes32[] public rootList;
     mapping(bytes32 => RootInfo) public rootInfo;
 
-    event NewAppid(bytes32 indexed _appid);
+    event AddAppid(bytes32 indexed _appid);
     event UpdateAdmin(
         bytes32 indexed _appid,
         address indexed _prev,
@@ -126,18 +126,15 @@ contract BridgeCore is BridgeCoreControl {
         return rootList.length;
     }
 
-    function newAppid(address _admin) external {
+    function addAppid(bytes32 _newid,address _admin) external {
         require(
             msg.sender == governance || msg.sender == master,
             "Permission denied"
         );
+        require(appids[_newid] == address(0), "Appid existed");
         appCount++;
-        bytes32 newid = keccak256(
-            abi.encodePacked(blockhash(block.number - 1), _admin, appCount)
-        );
-        require(appids[newid] == address(0), "Appid existed");
-        appids[newid] = _admin;
-        emit NewAppid(newid);
+        appids[_newid] = _admin;
+        emit AddAppid(_newid);
     }
 
     function updateAdmin(bytes32 _appid, address _admin)
