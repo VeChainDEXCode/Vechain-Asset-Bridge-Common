@@ -6,12 +6,12 @@ export class ValidatorEntity{
     @PrimaryColumn({name:"validator"})
     public validator!:string;
 
-    @Column({name:"status",type:"boolean"})
-    public status!:boolean;
+    @Column({name:"activate",type:"boolean"})
+    public activate!:boolean;
 
-    @Column({name:"update",unsigned: true})
-    public update!:number;
+    @Column({name:"updateblocknum",unsigned: true})
+    public updateBlockNum!:number;
 
-    @Column({name:"updateBlock"})
-    public updateBlock!:string;
+    @Column({name:"updateblockid"})
+    public updateBlockId!:string;
 }

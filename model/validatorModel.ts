@@ -17,13 +17,12 @@ export default class ValidatorModel {
             for(const entity of data){
                 let _new:Validator = {
                     validator:entity.validator,
-                    status:entity.status,
-                    update:entity.update,
-                    updateBlock:entity.updateBlock
+                    activate:entity.activate,
+                    updateBlockNum:entity.updateBlockNum,
+                    updateBlockId:entity.updateBlockId
                 }
                 result.data.push(_new);
             }
-
         } catch (error) {
             result.error = new Error(`getValidators faild: ${JSON.stringify(error)}`);
         }
@@ -38,9 +37,9 @@ export default class ValidatorModel {
                 for(const verifier of validators){
                     let entity = new ValidatorEntity();
                     entity.validator = verifier.validator;
-                    entity.status = verifier.status;
-                    entity.update = verifier.update;
-                    entity.updateBlock = verifier.updateBlock;
+                    entity.activate = verifier.activate;
+                    entity.updateBlockNum = verifier.updateBlockNum;
+                    entity.updateBlockId = verifier.updateBlockId;
                     await trans.save(entity);
                 }
             });

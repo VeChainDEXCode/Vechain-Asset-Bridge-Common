@@ -14,7 +14,6 @@ export class SnapshootModel {
     public async getLastSnapshoot():Promise<ActionData<BridgeSnapshoot>>{
         let result = new ActionData<BridgeSnapshoot>();
         result.data = {
-            parentMerkleRoot:ZeroRoot(),
             merkleRoot:ZeroRoot(),
             chains:[
                 {chainName:this.config.vechain.chainName,chainId:this.config.vechain.chainId,beginBlockNum:this.config.vechain.startBlockNum,endBlockNum:this.config.vechain.startBlockNum},
@@ -25,12 +24,10 @@ export class SnapshootModel {
         try {
             let data = await getRepository(SnapshootEntity)
                 .createQueryBuilder()
-                .where("valid = true")
                 .orderBy("end_blocknum_0","DESC")
                 .getOne();
             if(data != undefined){
                 result.data = {
-                    parentMerkleRoot:data.parentMerkleRoot,
                     merkleRoot:data.merkleRoot,
                     chains:[
                         {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
@@ -48,7 +45,6 @@ export class SnapshootModel {
     public async getSnapshootByRoot(root:string):Promise<ActionData<BridgeSnapshoot>>{
         let result = new ActionData<BridgeSnapshoot>();
         result.data = {
-            parentMerkleRoot:ZeroRoot(),
             merkleRoot:ZeroRoot(),
             chains:[
                 { chainName:this.config.vechain.chainName,chainId:this.config.vechain.chainId,beginBlockNum:this.config.vechain.startBlockNum,endBlockNum:this.config.vechain.startBlockNum },
@@ -64,49 +60,6 @@ export class SnapshootModel {
                 }});
                 if(data != undefined){
                     result.data = {
-                        parentMerkleRoot:data.parentMerkleRoot,
-                        merkleRoot:data.merkleRoot,
-                        chains:[
-                            {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
-                            {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
-                        ]
-                    }
-                }
-        } catch (error) {
-            result.error = error;
-        }
-
-        return result;
-    }
-
-    public async getSnapshootByParentRoot(parentRoot:string):Promise<ActionData<BridgeSnapshoot>>{
-        let result = new ActionData<BridgeSnapshoot>();
-        result.data = {
-            parentMerkleRoot:ZeroRoot(),
-            merkleRoot:ZeroRoot(),
-            chains:[
-                {
-                    chainName:this.config.vechain.chainName,
-                    chainId:this.config.vechain.chainId,
-                    beginBlockNum:this.config.vechain.startBlockNum,
-                    endBlockNum:this.config.vechain.startBlockNum},
-                {
-                    chainName:this.config.ethereum.chainName,
-                    chainId:this.config.ethereum.chainId,
-                    beginBlockNum:this.config.ethereum.startBlockNum,
-                    endBlockNum:this.config.ethereum.startBlockNum},
-            ]
-        }
-
-        try {
-            let data = await getRepository(SnapshootEntity)
-                .findOne({where:{
-                    parentMerkleRoot:parentRoot,
-                    valid:true
-                }});
-                if(data != undefined){
-                    result.data = {
-                        parentMerkleRoot:data.parentMerkleRoot,
                         merkleRoot:data.merkleRoot,
                         chains:[
                             {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
@@ -133,7 +86,6 @@ export class SnapshootModel {
                     .where("chainname_0 = :chainname",{chainname:claimtx.chainName})
                     .andWhere("chainid_0 = :chainid", {chainid:claimtx.chainId})
                     .andWhere("end_blocknum_0 <= :blocknum", {blocknum:claimtx.blockNumber})
-                    .andWhere("valid = :invalid",{invalid:true})
                     .orderBy("end_blocknum_0","DESC")
                     .limit(limit)
                     .offset(offset)
@@ -143,7 +95,6 @@ export class SnapshootModel {
                     .where("chainname_1 = :chainname",{chainname:claimtx.chainName})
                     .andWhere("chainid_1 = :chainid", {chainid:claimtx.chainId})
                     .andWhere("end_blocknum_1 <= :blocknum", {blocknum:claimtx.blockNumber})
-                    .andWhere("valid = :invalid",{invalid:true})
                     .orderBy("end_blocknum_1","DESC")
                     .limit(limit)
                     .offset(offset)
@@ -151,7 +102,6 @@ export class SnapshootModel {
             let datas = await query.getMany();
             for(const data of datas){
                 let sn:BridgeSnapshoot = {
-                    parentMerkleRoot:data.parentMerkleRoot,
                     merkleRoot:data.merkleRoot,
                     chains:[
                         {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
@@ -190,7 +140,6 @@ export class SnapshootModel {
                 for(const sn of sns){
                     let entity = new SnapshootEntity();
                     entity.merkleRoot = sn.merkleRoot;
-                    entity.parent = sn.parentMerkleRoot;
                     const vechainInfo = sn.chains.find(chain => {return chain.chainName == this.config.vechain.chainName && chain.chainId == this.config.vechain.chainId;});
                     const ethereumInfo = sn.chains.find(chain => {return chain.chainName == this.config.ethereum.chainName && chain.chainId == this.config.ethereum.chainId;});
                     if(vechainInfo != undefined){
@@ -206,7 +155,6 @@ export class SnapshootModel {
                         entity.beginBlockNum_1 = ethereumInfo.beginBlockNum;
                         entity.endBlockNum_1 = ethereumInfo.endBlockNum;
                     }
-                    entity.valid = true;
                     await trans.save(entity);
                 }
             });

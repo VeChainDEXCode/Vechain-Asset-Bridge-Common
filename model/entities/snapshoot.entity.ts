@@ -33,7 +33,4 @@ export class SnapshootEntity{
 
     @Column({name:"end_blocknum_1",unsigned: true})
     public endBlockNum_1!:number;
-
-    @Column({name:"valid",type:"boolean",default:true})
-    public valid!:boolean;
 }

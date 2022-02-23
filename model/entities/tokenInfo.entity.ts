@@ -22,27 +22,33 @@ export class TokenEntity{
     @Column({name:"decimals",unsigned: true})
     public decimals!:number;
 
-    @Column({name:"tokenaddr"})
+    @Column({name:"tokenAddr"})
     public tokenAddr!:string;
 
     @Column({name:"tokentype",unsigned: true})
     public tokenType!:number;
 
-    @Column({name:"targettoken"})
-    public targetToken!:string;
+    @Column({name:"targettokenaddr"})
+    public targetTokenAddr!:string;
+
+    @Column({name:"targetchainname"})
+    public targetChainName!:string;
+
+    @Column({name:"targetchainid"})
+    public targetChainId!:string;
 
     @Column({name:"begin",unsigned: true})
     public begin!:number;
 
+    @Column({name:'reward',unsigned:true})
+    public reward!:number;
+
     @Column({name:"end",unsigned: true})
     public end!:number;
 
-    @Column({name:"update",unsigned: true})
-    public update!:number;
+    @Column({name:"updateblocknum",unsigned: true})
+    public updateBlockNum!:number;
 
-    @Column({name:"updateblock"})
-    public updateBlock!:string;
-
-    @Column({name:"valid",type:"boolean",default:true})
-    public valid!:boolean;
+    @Column({name:"updateblockid"})
+    public updateBlockId!:string;
 }

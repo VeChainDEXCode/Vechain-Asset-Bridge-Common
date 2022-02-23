@@ -52,3 +52,7 @@ export function bridgeTxId(tx:BaseBridgeTx):string {
     ]);
     return '0x' + keccak256(buff).toString('hex');
 }
+
+export function amountOut(tx:SwapBridgeTx):bigint{
+    return BigInt(BigInt(tx.amount) / BigInt(1000) * BigInt(tx.reward));
+}

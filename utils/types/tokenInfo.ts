@@ -28,12 +28,3 @@ export function tokenid(chainName:string,chainId:string,address:string):string{
     ]); 
     return '0x' + keccak256(encode).toString('hex');
 }
-
-// export function findTargetToken(tokenInfo:TokenInfo[],chainName:string,chainId:string,token:string):TokenInfo | undefined{
-//     const filters = tokenInfo.filter( t =>{ return t.chainName == chainName && t.chainId == chainId && t.address.toLowerCase() == token.toLowerCase(); });
-//     if(filters.length == 0){
-//         return undefined;
-//     }
-//     const targetTokenId = filters[0].targetTokenId;
-//     return tokenInfo.filter( t => {return t.tokenid == targetTokenId})[0];
-// }

@@ -13,7 +13,6 @@ export default class TokenInfoModel {
         try {
             let data = await getRepository(TokenEntity)
                 .createQueryBuilder()
-                .where("valid = true")
                 .getMany();
             for(const entity of data){
                 let _new:TokenInfo = {
@@ -23,14 +22,17 @@ export default class TokenInfoModel {
                     name:entity.name,
                     symbol:entity.symbol,
                     decimals:entity.decimals,
-                    address:entity.tokenAddr,
+                    tokenAddr:entity.tokenAddr,
                     nativeCoin:false,
                     tokenType:entity.tokenType,
-                    targetTokenId:entity.targetToken,
+                    targetTokenAddr:entity.targetTokenAddr,
+                    targetChainName:entity.targetChainName,
+                    targetChainId:entity.targetChainId,
                     begin:entity.begin,
                     end:entity.end,
-                    update:entity.update,
-                    updateBlock:entity.updateBlock
+                    reward:entity.reward,
+                    updateBlockNum:entity.updateBlockNum,
+                    updateBlockId:entity.updateBlockId
                 }
                 result.data.push(_new);
             }
@@ -54,14 +56,15 @@ export default class TokenInfoModel {
                     entity.name = token.name;
                     entity.symbol = token.symbol;
                     entity.decimals = token.decimals;
-                    entity.tokenAddr = token.address;
+                    entity.tokenAddr = token.tokenAddr;
                     entity.tokenType = token.tokenType;
-                    entity.targetToken = token.targetTokenId;
+                    entity.targetTokenAddr = token.targetTokenAddr;
+                    entity.targetChainName = token.targetChainName;
+                    entity.targetChainId = token.targetChainId;
                     entity.begin = token.begin;
                     entity.end = token.end;
-                    entity.update = token.update;
-                    entity.updateBlock = token.updateBlock;
-                    entity.valid = true;
+                    entity.updateBlockNum = token.updateBlockNum;
+                    entity.updateBlockId = token.updateBlockId;
                     await transactionalEntityManager.save(entity);
                 }
             });
@@ -74,12 +77,12 @@ export default class TokenInfoModel {
     public async removeByBlockIds(chainName:string,chainId:string,blockIds:string[]):Promise<ActionResult>{
         let result = new ActionResult();
         try {
-            await getManager().transaction(async transactionalEntityManager => {
+            await getManager().transaction(async trans => {
                 for(const blockId of blockIds){
-                    await transactionalEntityManager.update(
+                    await trans.delete(
                         TokenEntity,
-                        {updateBlock:blockId},
-                        {valid:false})
+                        {updateBlockId:blockId}
+                    );
                 }
             });
         } catch (error) {

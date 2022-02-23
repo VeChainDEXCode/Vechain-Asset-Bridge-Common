@@ -26,9 +26,6 @@ export class BridgeTxEntity{
     @Column({name:`txid`})
     public txid!:string;
 
-    @Column({name:`clauseindex`,unsigned: true})
-    public clauseIndex!:number;
-
     @Column({name:`index`,unsigned: true})
     public index!:number;
 
@@ -48,16 +45,12 @@ export class BridgeTxEntity{
     @Column({name:`type`,unsigned: true})
     public type!:1|2;
 
-    @Column({name:`swaptxhash`})
-    @Index()
-    public swapTxHash!:string;
-
     @Column({name:`from`,nullable:true})
     public from!:string;
 
-    @Column({name:`reward`,nullable:true})
+    @Column({name:`reward`,nullable:false})
     public reward!:string;
 
-    @Column({name:`swapcount`,nullable:true})
+    @Column({name:`swapcount`,nullable:false})
     public swapCount!:string;
 }

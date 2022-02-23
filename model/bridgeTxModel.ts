@@ -1,7 +1,7 @@
-import { Equal, getManager, getRepository } from "typeorm";
+import { Equal, getConnection, getManager, getRepository } from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BridgeSnapshoot } from "../utils/types/bridgeSnapshoot";
-import { BaseBridgeTx,SwapBridgeTx,ClaimBridgeTx, bridgeTxId, swapTxHash, BridgeTxType } from "../utils/types/bridgeTx";
+import { BaseBridgeTx,SwapBridgeTx,ClaimBridgeTx, bridgeTxId, swapTxHash, BridgeTxType, amountOut } from "../utils/types/bridgeTx";
 import { BridgeTxEntity } from "./entities/bridgeTx.entity";
 
 export default class BridgeTxModel{
@@ -20,10 +20,9 @@ export default class BridgeTxModel{
                     entity.bridgeTxId = bridgeTxId(tx);
                     entity.chainName = tx.chainName;
                     entity.chainId = tx.chainId;
-                    entity.blockNumber = tx.blockNumber;
+                    entity.blockNum = tx.blockNumber;
                     entity.blockId = tx.blockId;
                     entity.txid = tx.txid;
-                    entity.clauseIndex = tx.clauseIndex;
                     entity.index = tx.index;
                     entity.token = tx.token;
                     entity.amount = '0x' + tx.amount.toString(16);
@@ -31,13 +30,11 @@ export default class BridgeTxModel{
                     entity.recipient = tx.recipient;entity.type
                     if(tx.type == BridgeTxType.swap){
                         entity.type = 1;
-                        entity.swapTxHash = swapTxHash(tx as SwapBridgeTx);
                         entity.from = (tx as SwapBridgeTx).from;
                         entity.reward = '0x' + (tx as SwapBridgeTx).reward.toString(16);
                         entity.swapCount = '0x' + (tx as SwapBridgeTx).swapCount.toString(16);
                     } else {
                         entity.type = 2;
-                        entity.swapTxHash = "";
                         entity.from = "";
                         entity.reward = "0x0";
                         entity.swapCount = "0x0";
@@ -55,25 +52,24 @@ export default class BridgeTxModel{
         let result = new ActionData<BaseBridgeTx>();
 
         try {
-            let data:BridgeTxEntity = await getRepository(BridgeTxEntity)
+            let data = await getRepository(BridgeTxEntity)
             .findOne({
                 chainName:Equal(chainName),
-                chainId:Equal(chainId),
-                valid:Equal(true)
+                chainId:Equal(chainId)
             },{
                 order:{
                     timestamp:"DESC"
                 }
             });
+
             if(data != undefined){
                 let tx:BaseBridgeTx = {
                     bridgeTxId:data.bridgeTxId,
                     chainName:data.chainName,
                     chainId:data.chainId,
-                    blockNumber:data.blockNumber,
+                    blockNumber:data.blockNum,
                     blockId:data.blockId,
                     txid:data.txid,
-                    clauseIndex:data.clauseIndex,
                     index:data.index,
                     token:data.token,
                     amount:BigInt(data.amount),
@@ -82,7 +78,6 @@ export default class BridgeTxModel{
                     type:data.type
                 }
                 if(tx.type == BridgeTxType.swap){
-                    (tx as SwapBridgeTx).swapTxHash = data.swapTxHash;
                     (tx as SwapBridgeTx).from = data.from;
                     (tx as SwapBridgeTx).reward = BigInt(data.reward);
                     (tx as SwapBridgeTx).swapCount = BigInt(data.swapCount);
@@ -123,10 +118,9 @@ export default class BridgeTxModel{
                     bridgeTxId:data.bridgeTxId,
                     chainName:data.chainName,
                     chainId:data.chainId,
-                    blockNumber:data.blockNumber,
+                    blockNumber:data.blockNum,
                     blockId:data.blockId,
                     txid:data.txid,
-                    clauseIndex:data.clauseIndex,
                     index:data.index,
                     token:data.token,
                     amount:BigInt(data.amount),
@@ -170,21 +164,23 @@ export default class BridgeTxModel{
                     bridgeTxId:item.bridgeTxId,
                     chainName:item.chainName,
                     chainId:item.chainId,
-                    blockNumber:item.blockNumber,
+                    blockNumber:item.blockNum,
                     blockId:item.blockId,
                     txid:item.txid,
-                    clauseIndex:item.clauseIndex,
                     index:item.index,
                     token:item.token,
                     amount:BigInt(item.amount),
                     timestamp:item.timestamp,
                     recipient:item.recipient,
                     type:BridgeTxType.swap,
-                    swapTxHash:item.swapTxHash,
+                    swapTxHash:"",
                     from:item.from,
                     reward:BigInt(item.reward),
+                    amountOut:BigInt(0),
                     swapCount:BigInt(item.swapCount)
                     };
+                bridgeTx.swapTxHash = swapTxHash(bridgeTx);
+                bridgeTx.amountOut = amountOut(bridgeTx);
                 result.data.push(bridgeTx);
             }
         } catch (error) {
@@ -215,10 +211,9 @@ export default class BridgeTxModel{
                         bridgeTxId:item.bridgeTxId,
                         chainName:item.chainName,
                         chainId:item.chainId,
-                        blockNumber:item.blockNumber,
+                        blockNumber:item.blockNum,
                         blockId:item.blockId,
                         txid:item.txid,
-                        clauseIndex:item.clauseIndex,
                         index:item.index,
                         token:item.token,
                         amount:BigInt(item.amount),
@@ -227,10 +222,11 @@ export default class BridgeTxModel{
                         type:item.type
                         };
                     if(bridgeTx.type == BridgeTxType.swap){
-                        (bridgeTx as SwapBridgeTx).swapTxHash = item.swapTxHash;
                         (bridgeTx as SwapBridgeTx).from = item.from;
                         (bridgeTx as SwapBridgeTx).reward = BigInt(item.reward);
                         (bridgeTx as SwapBridgeTx).swapCount = BigInt(item.swapCount);
+                        (bridgeTx as SwapBridgeTx).amountOut = amountOut(bridgeTx as SwapBridgeTx);
+                        (bridgeTx as SwapBridgeTx).swapTxHash = swapTxHash(bridgeTx as SwapBridgeTx);
                     }
                     result.data.push(bridgeTx);
                 }
@@ -247,10 +243,10 @@ export default class BridgeTxModel{
         try {
             await getManager().transaction(async trans => {
                 for(const blockId of blockIds){
-                    await trans.update(
+                    await trans.delete(
                         BridgeTxEntity,
-                        {blockId:blockId,chainName:chainName,chainId:chainId},
-                        {valid:false})
+                        {blockId:blockId,chainName:chainName,chainId:chainId}
+                    );
                 }
             });
         } catch (error) {

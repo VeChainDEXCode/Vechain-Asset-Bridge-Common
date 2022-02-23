@@ -1,5 +1,4 @@
 import { Column, Entity, Index, PrimaryColumn } from "typeorm";
-import { fixedBytes } from "../../utils/extensions/transformers";
 
 @Entity(`blockindex`)
 @Index([`chainName`,`chainId`])
