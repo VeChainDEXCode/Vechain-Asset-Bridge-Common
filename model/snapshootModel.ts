@@ -1,7 +1,10 @@
 import { getConnection, getManager, getRepository, SelectQueryBuilder } from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
+import { BlockRange } from "../utils/types/blockRange";
 import { BridgeSnapshoot, ZeroRoot } from "../utils/types/bridgeSnapshoot";
 import { BaseBridgeTx } from "../utils/types/bridgeTx";
+import { HashEvent, hashEventId } from "../utils/types/hashEvent";
+import { HashEventEntity } from "./entities/hashEvent.entity";
 import { SnapshootEntity } from "./entities/snapshoot.entity";
 
 export class SnapshootModel {
@@ -155,6 +158,70 @@ export class SnapshootModel {
                         entity.beginBlockNum_1 = ethereumInfo.beginBlockNum;
                         entity.endBlockNum_1 = ethereumInfo.endBlockNum;
                     }
+                    await trans.save(entity);
+                }
+            });
+        } catch (error) {
+            result.error = error;
+        }
+        return result;
+    }
+
+    public async getHashEventsByRange(chainname:string,chainid:string,range:BlockRange):Promise<ActionData<HashEvent[]>>{
+        let result = new ActionData<HashEvent[]>();
+        result.data = new Array();
+
+        try {
+            let query = getRepository(HashEventEntity)
+            .createQueryBuilder()
+            .where("chainname = :name",{name:chainname})
+            .andWhere("chainid = :id",{id:chainid});
+
+            query = range.blockNum != undefined && range.blockNum.from != undefined ? query.andWhere("blocknum >= :num",{num:range.blockNum.from}) : query;
+            query = range.blockNum != undefined && range.blockNum.to != undefined ? query.andWhere("blocknum <= :num",{num:range.blockNum.to}) : query;
+            query = range.blockids != undefined && range.blockids.length > 0 ? query.andWhere("blockid IN (:list)",{list:range.blockids}) : query;
+
+            const datas = await query.getMany();
+            for(const item of datas){
+                let event:HashEvent = {
+                    chainName:item.chainName,
+                    chainId:item.chainId,
+                    blockNumber:item.blockNumber,
+                    blockId:item.blockId,
+                    txid:item.txid,
+                    index:item.index,
+                    timestamp:item.timestamp,
+                    appid:item.appid,
+                    sender:item.sender,
+                    hash:item.hash
+                };
+                result.data.push(event);
+            }
+        } catch (error) {
+            result.error = error;
+        }
+        return result;
+
+        return result;
+    }
+
+    public async saveHashEvents(events:HashEvent[]):Promise<ActionResult>{
+        let result = new ActionResult();
+        try {
+            await getManager().transaction(async trans => {
+                for(const ev of events){
+                    let entity = new HashEventEntity();
+                    entity.eventId = hashEventId(ev);
+                    entity.chainName = ev.chainId,
+                    entity.chainId = ev.chainId,
+                    entity.blockNumber = ev.blockNumber,
+                    entity.blockId = ev.blockId,
+                    entity.txid = ev.txid,
+                    entity.index = ev.index,
+                    entity.timestamp = ev.timestamp,
+                    entity.appid = ev.appid,
+                    entity.sender = ev.sender,
+                    entity.hash = ev.hash
                     await trans.save(entity);
                 }
             });

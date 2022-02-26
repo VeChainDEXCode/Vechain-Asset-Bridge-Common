@@ -137,7 +137,7 @@ export default class BridgeTxModel{
         return result;
     }
 
-    public async getSwapTxs(chainName:string,chainId:string,account:string,token?:string,begin?:number,end?:number,limit?:number,offset:number = 0):Promise<ActionData<BridgeTx[]>>{
+    public async getSwapTxs(chainName:string,chainId:string,account:string,token?:string,begin?:number,end?:number,limit?:number,offset:number = 0):Promise<ActionData<SwapBridgeTx[]>>{
         let result = new ActionData<SwapBridgeTx[]>();
         result.data = new Array();
 

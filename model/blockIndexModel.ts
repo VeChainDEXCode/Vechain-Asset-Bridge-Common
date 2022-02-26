@@ -3,6 +3,7 @@ import { BlockIndex } from "../utils/types/blockIndex";
 import { getConnection, getManager, getRepository } from "typeorm";
 import { BlockIndexEntity } from "./entities/blockIndex.entity";
 import { keccak256 } from "thor-devkit";
+import { BlockRange } from "../utils/types/blockRange";
 
 export default class BlockIndexModel {
     constructor(){}
@@ -139,12 +140,4 @@ export default class BlockIndexModel {
         ])
         return "0x" + keccak256(buff).toString('hex');
     }
-}
-
-export type BlockRange = {
-    blockNum?:{
-        from?:number,
-        to?:number
-    },
-    blockids?:string[]
 }

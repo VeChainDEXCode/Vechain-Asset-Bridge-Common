@@ -1,8 +1,7 @@
 import { keccak256 } from "thor-devkit";
-import { ActionResult } from "./components/actionResult";
 import MerkleTree, { TreeNode } from "./merkleTree";
 import { BridgeSnapshoot, ChainInfo } from "./types/bridgeSnapshoot";
-import { SwapBridgeTx, swapTxHash } from "./types/bridgeTx";
+import { HashEvent } from "./types/hashEvent";
 
 export default class BridgeStorage {
 
@@ -14,27 +13,27 @@ export default class BridgeStorage {
         this.merkleRootNode = TreeNode.EmptyTreeNode();
     }
 
-    public buildTree(appid:string,newSnapshoot:BridgeSnapshoot,txs:SwapBridgeTx[]):TreeNode {
+    public buildTree(appid:string,newSnapshoot:BridgeSnapshoot,events:HashEvent[]):TreeNode {
         this.tree = MerkleTree.createNewTree();
-        const sorted:Array<SwapBridgeTx> = txs.sort((l,r) => {
-            return BigInt(l.swapTxHash) > BigInt(r.swapTxHash) ? 1 : -1;
+        const sorted:Array<HashEvent> = events.sort((l,r) => {
+            return BigInt(l.hash) > BigInt(r.hash) ? 1 : -1;
         });
         
         let infoHash = BridgeStorage.snapshootHash(newSnapshoot.chains);
         this.tree.addHash(infoHash);
 
-        sorted.forEach(tx => {
-            this.tree.addHash(BridgeStorage.leaf(appid,tx.swapTxHash));
+        sorted.forEach(event => {
+            this.tree.addHash(BridgeStorage.leaf(appid,event.hash));
         });
 
         this.merkleRootNode = this.tree.buildTree();
         return this.merkleRootNode;
     }
 
-    public static leaf(appid:string,swapTxHash:string):string {
+    public static leaf(appid:string,eventhash:string):string {
         const buff = Buffer.concat([
             Buffer.from(appid.substring(2),'hex'),
-            Buffer.from(swapTxHash.substring(2),'hex')
+            Buffer.from(eventhash.substring(2),'hex')
         ]);
         return '0x' + keccak256(buff).toString('hex');
     }
@@ -43,13 +42,14 @@ export default class BridgeStorage {
         return this.merkleRootNode.nodeHash;
     }
 
-    public getMerkleProof(swapTxHash:string):Array<string>{
-        return this.tree.getMerkleProof(swapTxHash);
+    public getMerkleProof(appid:string,eventhash:string):Array<string>{
+        const hash = BridgeStorage.leaf(appid,eventhash);
+        return this.tree.getMerkleProof(hash);
     }
 
-    public static verificationMerkleProof(swaptx:SwapBridgeTx,root:string,proof:Array<string>):boolean{
-        let leafHash = swapTxHash(swaptx);
-        return MerkleTree.verificationMerkleProof(leafHash,root,proof);
+    public static verificationMerkleProof(appid:string,eventhash:string,root:string,proof:Array<string>):boolean{
+        const hash = BridgeStorage.leaf(appid,eventhash);
+        return MerkleTree.verificationMerkleProof(hash,root,proof);
     }
 
     public static snapshootEncodePacked(chains:ChainInfo[]):Buffer {

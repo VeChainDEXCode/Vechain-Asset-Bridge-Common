@@ -1,5 +1,4 @@
 import { Column, Entity, Index, IsNull, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
-import { fixedBytes } from "../../utils/extensions/transformers";
 
 @Entity("snapshoot")
 @Index(["chainName_0","chainId_0"])

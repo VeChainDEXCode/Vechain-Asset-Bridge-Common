@@ -12,7 +12,7 @@ export default class ValidatorModel {
         try {
             let data = await getRepository(ValidatorEntity)
                 .createQueryBuilder()
-                .where("status = true")
+                .where("activate = true")
                 .getMany();
             for(const entity of data){
                 let _new:Validator = {

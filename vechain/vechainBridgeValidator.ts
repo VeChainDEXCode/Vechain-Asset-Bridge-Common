@@ -33,7 +33,7 @@ export class VeChainBridgeValidatorReader {
         let result = new ActionData<Proposal>();
         try {
             const args = this.argsRLP.encode({vbegin:vbegin,vend:vend,ebegin:ebegin,eend:eend});
-            const call = await this.v2eVerifiter.call("getMerkleRootProposal",root,args);
+            const call = await this.bridgeValidator.call("getMerkleRootProposal",root,args);
             let p:Proposal = {
                 root:root,
                 executed:call.decoded[0][0] != "0" ? true : false,
@@ -87,14 +87,13 @@ export class VeChainBridgeValidatorReader {
 
     private initValidator(){
         const filePath = path.join(this.env.contractdir,"/vechain/Contract_VeChainBridgeValidator.sol");
-        const abi = JSON.parse(compileContract(filePath,'VeChainBridgeValidator','abi',[this.env.contractdir]));
-        this.bridgeValidator = new Contract({abi:abi,connex:this.connex,address:this.config.vechain.contracts.bridgeValidator});
-        this.ValidatorChangedEvent = new abi.Event(this.v2eVerifiter.ABI("ValidatorChanged","event") as any);
+        const validatorAbi = JSON.parse(compileContract(filePath,'VeChainBridgeValidator','abi',[this.env.contractdir]));
+        this.bridgeValidator = new Contract({abi:validatorAbi,connex:this.connex,address:this.config.vechain.contracts.bridgeValidator});
+        this.ValidatorChangedEvent = new abi.Event(this.bridgeValidator.ABI("ValidatorChanged","event") as any);
     }
 
     protected env:any;
     protected config:any;
-    protected v2eVerifiter!:Contract;
     protected connex!:Framework;
     protected readonly scanBlockStep = 200;
     protected bridgeValidator!:Contract;
@@ -110,7 +109,7 @@ export class VeChainBridgeValidatorReader {
     });
 }
 
-export class VeChainBridgeVerifiter extends VeChainBridgeValidatorReader {
+export class VeChainBridgeValidator extends VeChainBridgeValidatorReader {
 
     constructor(env:any){
         super(env);
