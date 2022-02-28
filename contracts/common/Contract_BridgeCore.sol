@@ -123,7 +123,7 @@ contract BridgeCore is BridgeCoreControl {
     }
 
     function rootCount() external view returns (uint256) {
-        return rootList.length;
+        return rootList.length - 1;
     }
 
     function addAppid(bytes32 _newid,address _admin) external {
