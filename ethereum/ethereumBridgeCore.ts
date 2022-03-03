@@ -153,6 +153,23 @@ export class EthereumBridgeCore implements IBridgeCore {
         }
         return result;
     }
+
+    public async getMerkleRootByRoot(root:string):Promise<ActionData<{root: string; args: any}>> {
+        let result = new ActionData<{root: string; args: any}>();
+        result.data = {root:ZeroRoot(),args:{}};
+
+        try {
+            const infoDecode = await this.bridgeCore.methods.rootInfo(root).call();
+            if(infoDecode.index != 0){
+                const rlpDecode = this.argsRLP.decode(infoDecode.args);
+                result.data = {root:root,args:rlpDecode};
+            }
+        } catch (error) {
+            result.error = error;
+        }
+
+        return result;
+    }
     
     public async getInfoByRoot(root: string): Promise<ActionData<{ root: string; index: number; args: any; }>> {
         let result = new ActionData<{ root: string; index: number; args: any; }>();

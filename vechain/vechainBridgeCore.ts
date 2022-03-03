@@ -47,9 +47,9 @@ export class VeChainBridgeCore implements IBridgeCore {
         let begin = this.config.vechain.startBlockNum;
         let end = (await this.connex.thor.block().get())!.number;
 
-        for(let blockNum = end;blockNum >= begin;){
-            let from = blockNum - this.scanBlockStep >= begin ? blockNum - this.scanBlockStep + 1: begin;
-            let to = blockNum;
+        for(let bNum = end;bNum > begin;){
+            let from = bNum - this.scanBlockStep >= begin ? bNum - this.scanBlockStep + 1: begin;
+            let to = bNum;
             const events = await filter.range({unit:"block",from:from,to:to}).apply(0,1);
             if(events.length == 1){
                 sn = this.convertToSN(events[0]);
@@ -57,7 +57,7 @@ export class VeChainBridgeCore implements IBridgeCore {
                 blocknum = events[0].meta.blockNumber;
                 break;
             } else {
-                blockNum = from;
+                bNum = from;
                 continue;
             }
         }
@@ -149,40 +149,62 @@ export class VeChainBridgeCore implements IBridgeCore {
         return result;
     }
 
-    public async getMerkleRootByIndex(index: number): Promise<ActionData<{root: string; args: any}>> {
-        let result = new ActionData<{root: string; args: any}>();
-        result.data = {root:ZeroRoot(),args:{}};
-
+    public async getSnapshootByIndex(index: number):Promise<ActionData<BridgeSnapshoot>>{
+        let result = new ActionData<BridgeSnapshoot>();
+        result.data = {merkleRoot:ZeroRoot(),chains:[]};
         try {
             const root = (await this.bridgeCore.call('rootList',index)).decoded[0];
             if(root != ZeroRoot()){
                 const infoDecode = (await this.bridgeCore.call('rootInfo',root));
                 const rlpDecode = this.argsRLP.decode(infoDecode.decoded[1]);
-                result.data = {root:root,args:rlpDecode};
+                result.data = {merkleRoot:root,chains:[
+                    {
+                        chainName:this.config.vechain.chainName,
+                        chainId:this.config.vechain.chainId,
+                        beginBlockNum:rlpDecode.vbegin as number,
+                        endBlockNum:rlpDecode.vend as number
+                    },
+                    {
+                        chainName:this.config.ethereum.chainName,
+                        chainId:this.config.ethereum.chainId,
+                        beginBlockNum:rlpDecode.ebegin as number,
+                        endBlockNum:rlpDecode.eend as number
+                    }]}
             }
         } catch (error) {
             result.error = error;
         }
-
         return result;
     }
 
-    public async getInfoByRoot(root: string): Promise<ActionData<{root: string; index:number,args: any}>> {
-        let result = new ActionData<{root: string; index:number,args: any}>();
-        result.data = {root:ZeroRoot(),index:0,args:{}};
-
+    public async getSnapshootByRoot(root:string):Promise<ActionData<{sn:BridgeSnapshoot,index:number}>>{
+        let result = new ActionData<{sn:BridgeSnapshoot,index:number}>();
+        result.data = {sn:{merkleRoot:ZeroRoot(),chains:[]},index:0};
         try {
             const infoDecode = (await this.bridgeCore.call('rootInfo',root));
             if(infoDecode.decoded[0] != 0){
                 const rlpDecode = this.argsRLP.decode(infoDecode.decoded[1]);
-                result.data = {root:root,index:infoDecode.decoded[0],args:rlpDecode};
+                result.data.index = infoDecode.decoded[0] as number;
+                result.data.sn = {merkleRoot:root,chains:[
+                    {
+                        chainName:this.config.vechain.chainName,
+                        chainId:this.config.vechain.chainId,
+                        beginBlockNum:rlpDecode.vbegin as number,
+                        endBlockNum:rlpDecode.vend as number
+                    },
+                    {
+                        chainName:this.config.ethereum.chainName,
+                        chainId:this.config.ethereum.chainId,
+                        beginBlockNum:rlpDecode.ebegin as number,
+                        endBlockNum:rlpDecode.eend as number
+                    }]}
             }
         } catch (error) {
             result.error = error;
         }
-
         return result;
     }
+
 
     private initBridgeCore() {
         const filePath = path.join(this.env.contractdir,'/common/Contract_BridgeCore.sol');

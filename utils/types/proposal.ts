@@ -3,6 +3,6 @@ export type Proposal = {
     createBlock:number,
     executblock:number,
     executed:boolean;
-    args:any[],
+    args:any,
     signatures:string[]
 }

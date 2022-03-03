@@ -7,6 +7,6 @@ export interface IBridgeCore {
     getSnapshootByRange(begin:number,end:number):Promise<ActionData<BridgeSnapshoot[]>>;
     getRootCount():Promise<ActionData<number>>;
     getSubmitEventsByRange(begin:number,end:number):Promise<ActionData<HashEvent[]>>;
-    getMerkleRootByIndex(index:number):Promise<ActionData<{root:string,args:any}>>;
-    getInfoByRoot(root:string):Promise<ActionData<{root: string; index:number,args: any}>>;
+    getSnapshootByIndex(index: number):Promise<ActionData<BridgeSnapshoot>>;
+    getSnapshootByRoot(root:string):Promise<ActionData<{sn:BridgeSnapshoot,index:number}>>;
 }

@@ -39,7 +39,7 @@ export class VeChainBridgeValidatorReader {
                 executed:call.decoded[0][0] != "0" ? true : false,
                 createBlock:Number(call.decoded[0][1]),
                 executblock:Number(call.decoded[0][2]),
-                args:(call.decoded[0][4] as Array<string>),
+                args:(call.decoded[0][4] as string),
                 signatures:(call.decoded[0][5] as Array<string>)
             }
             result.data = p;

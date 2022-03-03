@@ -113,13 +113,13 @@ contract BridgeCore is BridgeCoreControl {
     event SubmitHashEvent(bytes32 indexed _appid, address indexed _sender,bytes32 indexed _value);
     event UpdateMerkleRoot(bytes32 indexed _root, bytes _args);
 
-    constructor(string memory _chainname, string memory _chainid) {
+    constructor(string memory _chainname, string memory _chainid,bytes memory _args) {
         chainname = _chainname;
         chainid = _chainid;
         master = msg.sender;
         governance = msg.sender;
-        rootInfo[bytes32(0)] = RootInfo(0,new bytes(0));
-        rootList.push(bytes32(0));
+        rootInfo[0x0000000000000000000000000000000000000000000000000000000000000001] = RootInfo(0,_args);
+        rootList.push(0x0000000000000000000000000000000000000000000000000000000000000001);
     }
 
     function rootCount() external view returns (uint256) {

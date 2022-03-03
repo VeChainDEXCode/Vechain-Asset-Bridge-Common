@@ -58,14 +58,12 @@ export class EthereumBridgeValidator extends EthereumBridgeValidatorReader {
         this.wallet = this.env.wallet;
     }
 
-    public async updateBridgeMerkleRoot(root:string,vbegin:number,vend:number,ebegin:number,eend:number,signs:string[]):Promise<ActionData<string>>{
+    public async updateBridgeMerkleRoot(root:string,args:Buffer,signs:string[]):Promise<ActionData<string>>{
         let result = new ActionData<string>();
         try {
             const blockRef = await this.web3.eth.getBlockNumber();
             const expirnum = this.config.ethereum.expiration as number;
             const gasprice = await this.web3.eth.getGasPrice();
-            const args = this.argsRLP.encode({vbegin:vbegin,vend:vend,ebegin:ebegin,eend:eend});
-
             const gas = await this.bridgeValidator.methods.updateBridgeMerkleRoot(root,args,signs,blockRef,expirnum)
                 .estimateGas();
             const receipt = await this.bridgeValidator.methods.updateBridgeMerkleRoot(root,args,signs,blockRef,expirnum).send({
