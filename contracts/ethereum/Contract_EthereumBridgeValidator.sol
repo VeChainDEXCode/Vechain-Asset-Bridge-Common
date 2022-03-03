@@ -87,7 +87,6 @@ contract EthereumBridgeValidator is BridgeValidatorControl {
         bytes32 khash = keccak256(abi.encodePacked(_root,_args));
         require(merkleRootProposals[khash] == false,"the operation had executed");
 
-        IBridgeCore bridge = IBridgeCore(bridge);
         uint8 limit = quorum(validatorCount);
         require(_sigs.length + 1 >= limit, "Insufficient number of signatures");
 
@@ -99,12 +98,22 @@ contract EthereumBridgeValidator is BridgeValidatorControl {
             signers[i] = signer;
             emit UpdateBridgeMerkleRoot(_root);
             if (i + 1 >= limit) {
+                IBridgeCore bridge = IBridgeCore(bridge);
                 bridge.updateMerkleRoot(_root,new bytes(0));
                 merkleRootProposals[khash] = true;
                 emit ExecOperation(khash);
                 break;
             }
         }
+    }
+
+    function getMerkleRootProposal(bytes32 _root,bytes calldata _args)
+        external
+        view
+        returns (bool)
+    {
+        bytes32 khash = keccak256(abi.encodePacked(_root,_args));
+        return merkleRootProposals[khash];
     }
 
 

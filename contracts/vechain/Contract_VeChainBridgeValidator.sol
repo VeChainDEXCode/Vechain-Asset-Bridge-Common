@@ -148,9 +148,9 @@ contract VeChainBridgeValidator is BridgeValidatorControl {
         prop.signatures.push(_sig);
         emit SubmitUpdateRoot(_root, signer, _sig);
 
-        if (merkleRootProposals[khash].signatures.length >= quorum(validatorCount) && prop.executed == false) {
+        if (prop.signatures.length >= quorum(validatorCount) && prop.executed == false) {
             IBridgeCore bri = IBridgeCore(bridge);
-            bri.updateMerkleRoot(_root, merkleRootProposals[khash].args);
+            bri.updateMerkleRoot(_root, prop.args);
             prop.executed = true;
             prop.executblock = block.number;
             emit ExecOpertion(khash);

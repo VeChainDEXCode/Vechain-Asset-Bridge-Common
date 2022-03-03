@@ -50,6 +50,7 @@ export class EthereumBridgeCore implements IBridgeCore {
                 const events = await this.bridgeCore.getPastEvents('UpdateMerkleRoot',{fromBlock:from,toBlock:to});
                 if(events.length == 0){
                     blockNum = from - 1;
+                    continue;
                 }
                 const ev = events[events.length - 1];
                 sn = this.convertToSN(ev);
