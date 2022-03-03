@@ -3,7 +3,6 @@ import { HashEvent } from "./hashEvent";
 export type BridgeSnapshoot = {
     merkleRoot:string;
     chains:Array<ChainInfo>;
-    events:Array<HashEvent>;
 }
 
 export type ChainInfo = {

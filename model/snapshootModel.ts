@@ -52,8 +52,7 @@ export class SnapshootModel {
             chains:[
                 { chainName:this.config.vechain.chainName,chainId:this.config.vechain.chainId,beginBlockNum:this.config.vechain.startBlockNum,endBlockNum:this.config.vechain.startBlockNum },
                 { chainName:this.config.ethereum.chainName,chainId:this.config.ethereum.chainId,beginBlockNum:this.config.ethereum.startBlockNum,endBlockNum:this.config.ethereum.startBlockNum },
-            ],
-            events:[]
+            ]
         }
 
         try {
@@ -68,8 +67,7 @@ export class SnapshootModel {
                         chains:[
                             {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
                             {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
-                        ],
-                        events:[]
+                        ]
                     }
                 }
         } catch (error) {
@@ -96,7 +94,7 @@ export class SnapshootModel {
         return result;
     }
 
-    public async save(sns:BridgeSnapshoot[]):Promise<ActionResult>{
+    public async save(sns:BridgeSnapshoot[],events:HashEvent[]):Promise<ActionResult>{
         let result = new ActionResult();
 
         try {
@@ -120,22 +118,22 @@ export class SnapshootModel {
                         entity.endBlockNum_1 = ethereumInfo.endBlockNum;
                     }
                     await trans.save(entity);
+                }
 
-                    for(const ev of sn.events){
-                        let entity = new HashEventEntity();
-                        entity.eventId = hashEventId(ev);
-                        entity.chainName = ev.chainId,
-                        entity.chainId = ev.chainId,
-                        entity.blockNumber = ev.blockNumber,
-                        entity.blockId = ev.blockId,
-                        entity.txid = ev.txid,
-                        entity.index = ev.index,
-                        entity.timestamp = ev.timestamp,
-                        entity.appid = ev.appid,
-                        entity.sender = ev.sender,
-                        entity.hash = ev.hash
-                        await trans.save(entity);
-                    }
+                for(const ev of events){
+                    let entity = new HashEventEntity();
+                    entity.eventId = hashEventId(ev);
+                    entity.chainName = ev.chainId,
+                    entity.chainId = ev.chainId,
+                    entity.blockNumber = ev.blockNumber,
+                    entity.blockId = ev.blockId,
+                    entity.txid = ev.txid,
+                    entity.index = ev.index,
+                    entity.timestamp = ev.timestamp,
+                    entity.appid = ev.appid,
+                    entity.sender = ev.sender,
+                    entity.hash = ev.hash
+                    await trans.save(entity);
                 }
             });
         } catch (error) {

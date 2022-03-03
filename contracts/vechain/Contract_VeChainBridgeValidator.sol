@@ -15,8 +15,8 @@ contract BridgeValidatorControl {
     address public bridge;
     
     
-    uint8 public proposalExp = 30;
-    uint8 public proposalSubmitExp = 3;
+    uint16 public proposalExp = 360;
+    uint16 public proposalSubmitExp = 30;
 
     uint8 public validatorCount;
     mapping(address => bool) public validators;
@@ -25,8 +25,8 @@ contract BridgeValidatorControl {
     event ValidatorChanged(address indexed _validator, bool indexed _status);
     event GovernanceUpdate(address indexed _prev, address indexed _new);
     event BridgeUpdate(address indexed _prev,address indexed _new);
-    event ProposalExpChanged(uint8 indexed _prev,uint8 indexed _value);
-    event ProposalSubmitExpChanged(uint8 indexed _prev,uint8 indexed _value);
+    event ProposalExpChanged(uint16 indexed _prev,uint16 indexed _value);
+    event ProposalSubmitExpChanged(uint16 indexed _prev,uint16 indexed _value);
 
     function setMaster(address _new) external onlyMaster {
         emit MasterChanged(master, _new);
@@ -115,19 +115,6 @@ contract VeChainBridgeValidator is BridgeValidatorControl {
         
         bytes32 khash = keccak256(abi.encodePacked(_root,_args));
 
-        require(
-            block.number - merkleRootProposals[khash].createBlock <= proposalExp,
-            "the proposal had expired"
-        );
-
-        require(
-            merkleRootProposals[khash].executed == false || (merkleRootProposals[khash].executed == true && block.number - merkleRootProposals[khash].executblock <= proposalSubmitExp),
-            "the proposal had executed or submit expired"
-        );
-
-        address signer = ECVerify.ecrecovery(khash, _sig);
-        require(validators[signer] == true, "signer isn't a verifier");
-
         if(merkleRootProposals[khash].createBlock == 0){
             Proposal memory _new = Proposal({
                 executed:false,
@@ -140,6 +127,19 @@ contract VeChainBridgeValidator is BridgeValidatorControl {
             merkleRootProposals[khash] = _new;
         }
         Proposal storage prop = merkleRootProposals[khash];
+
+        require(
+            block.number - prop.createBlock <= proposalExp,
+            "the proposal had expired"
+        );
+
+        require(
+            prop.executed == false || (prop.executed == true && block.number - prop.executblock <= proposalSubmitExp),
+            "the proposal had executed or submit expired"
+        );
+
+        address signer = ECVerify.ecrecovery(khash, _sig);
+        require(validators[signer] == true, "signer isn't a verifier");
 
         require(
             ArrayLib.bytesExists(prop.signatures, _sig) == false,

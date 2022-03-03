@@ -57,6 +57,13 @@ export class EthereumBridgeCore implements IBridgeCore {
                 blocknum = ev.blockNumber;
                 break;
             }
+
+            //Handle GenesisSnapshoot
+            if(sn.merkleRoot == (this.env.genesisSnapshoot as BridgeSnapshoot).merkleRoot){
+                result.data = {sn:this.env.genesisSnapshoot,txid:txid,blocknum:blocknum};
+                return result;
+            }
+
             result.data = {sn:sn,txid:txid,blocknum:blocknum};
         } catch (error) {
             result.error = error;
@@ -137,15 +144,37 @@ export class EthereumBridgeCore implements IBridgeCore {
         return result;
     }
     
-    public async getMerkleRootByIndex(index: number): Promise<ActionData<{ root: string; args: any; }>> {
-        let result = new ActionData<{ root: string; args: any; }>();
-        result.data = {root:ZeroRoot(),args:{}};
+    public async getSnapshootByIndex(index: number): Promise<ActionData<BridgeSnapshoot>> {
+        let result = new ActionData<BridgeSnapshoot>();
+        result.data = {merkleRoot:ZeroRoot(),chains:[]};
+
+        //Handle GenesisSnapshoot
+        if(index == 0){
+            result.data = this.env.genesisSnapshoot;
+            return result;
+        }
+
         try {
             const root = await this.bridgeCore.methods.rootList(index).call();
             if(root != ZeroRoot()){
                 const infoDecode = await this.bridgeCore.methods.rootInfo(root).call();
                 const rlpDecode = this.argsRLP.decode(infoDecode.args);
-                result.data = {root:root,args:rlpDecode};
+                result.data = {
+                    merkleRoot:root,
+                    chains:[
+                        {
+                            chainName:this.config.vechain.chainName,
+                            chainId:this.config.vechain.chainId,
+                            beginBlockNum:rlpDecode.vbegin as number,
+                            endBlockNum:rlpDecode.vend as number
+                        },
+                        {
+                            chainName:this.config.ethereum.chainName,
+                            chainId:this.config.ethereum.chainId,
+                            beginBlockNum:rlpDecode.ebegin as number,
+                            endBlockNum:rlpDecode.eend as number
+                        }
+                ]}
             }
 
         } catch (error) {
@@ -154,15 +183,39 @@ export class EthereumBridgeCore implements IBridgeCore {
         return result;
     }
 
-    public async getMerkleRootByRoot(root:string):Promise<ActionData<{root: string; args: any}>> {
-        let result = new ActionData<{root: string; args: any}>();
-        result.data = {root:ZeroRoot(),args:{}};
+    public async getSnapshootByRoot(root:string):Promise<ActionData<{sn:BridgeSnapshoot,index:number}>> {
+        let result = new ActionData<{sn:BridgeSnapshoot,index:number}>();
+        result.data = {sn:{merkleRoot:ZeroRoot(),chains:[]},index:0};
+
+        //Handle GenesisSnapshoot
+        if(root == (this.env.genesisSnapshoot as BridgeSnapshoot).merkleRoot){
+            result.data = {sn:this.env.genesisSnapshoot,index:0};
+            return result;
+        }
 
         try {
             const infoDecode = await this.bridgeCore.methods.rootInfo(root).call();
             if(infoDecode.index != 0){
                 const rlpDecode = this.argsRLP.decode(infoDecode.args);
-                result.data = {root:root,args:rlpDecode};
+                result.data = {
+                    index:infoDecode.index as number,
+                    sn:{
+                        merkleRoot:root,
+                        chains:[
+                            {
+                                chainName:this.config.vechain.chainName,
+                                chainId:this.config.vechain.chainId,
+                                beginBlockNum:rlpDecode.vbegin as number,
+                                endBlockNum:rlpDecode.vend as number
+                            },
+                            {
+                                chainName:this.config.ethereum.chainName,
+                                chainId:this.config.ethereum.chainId,
+                                beginBlockNum:rlpDecode.ebegin as number,
+                                endBlockNum:rlpDecode.eend as number
+                            }
+                    ]}
+                }
             }
         } catch (error) {
             result.error = error;

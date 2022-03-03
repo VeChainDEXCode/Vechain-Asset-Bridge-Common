@@ -61,6 +61,13 @@ export class VeChainBridgeCore implements IBridgeCore {
                 continue;
             }
         }
+
+        //Handle GenesisSnapshoot
+        if(sn.merkleRoot == (this.env.genesisSnapshoot as BridgeSnapshoot).merkleRoot){
+            result.data = {sn:this.env.genesisSnapshoot,txid:txid,blocknum:blocknum};
+            return result;
+        }
+
         result.data = {sn:sn,txid:txid,blocknum:blocknum};
         return result;
     }
@@ -152,6 +159,13 @@ export class VeChainBridgeCore implements IBridgeCore {
     public async getSnapshootByIndex(index: number):Promise<ActionData<BridgeSnapshoot>>{
         let result = new ActionData<BridgeSnapshoot>();
         result.data = {merkleRoot:ZeroRoot(),chains:[]};
+
+        //Handle GenesisSnapshoot
+        if(index == 0){
+            result.data = this.env.genesisSnapshoot;
+            return result;
+        }
+
         try {
             const root = (await this.bridgeCore.call('rootList',index)).decoded[0];
             if(root != ZeroRoot()){
@@ -180,6 +194,13 @@ export class VeChainBridgeCore implements IBridgeCore {
     public async getSnapshootByRoot(root:string):Promise<ActionData<{sn:BridgeSnapshoot,index:number}>>{
         let result = new ActionData<{sn:BridgeSnapshoot,index:number}>();
         result.data = {sn:{merkleRoot:ZeroRoot(),chains:[]},index:0};
+
+        //Handle GenesisSnapshoot
+        if(root == (this.env.genesisSnapshoot as BridgeSnapshoot).merkleRoot){
+            result.data = {sn:this.env.genesisSnapshoot,index:0};
+            return result;
+        }
+
         try {
             const infoDecode = (await this.bridgeCore.call('rootInfo',root));
             if(infoDecode.decoded[0] != 0){
