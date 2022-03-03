@@ -120,6 +120,7 @@ contract BridgeCore is BridgeCoreControl {
         governance = msg.sender;
         rootInfo[0x0000000000000000000000000000000000000000000000000000000000000001] = RootInfo(0,_args);
         rootList.push(0x0000000000000000000000000000000000000000000000000000000000000001);
+        emit UpdateMerkleRoot(0x0000000000000000000000000000000000000000000000000000000000000001,_args);
     }
 
     function rootCount() external view returns (uint256) {
