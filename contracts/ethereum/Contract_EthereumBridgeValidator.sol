@@ -99,7 +99,7 @@ contract EthereumBridgeValidator is BridgeValidatorControl {
             emit UpdateBridgeMerkleRoot(_root);
             if (i + 1 >= limit) {
                 IBridgeCore bridge = IBridgeCore(bridge);
-                bridge.updateMerkleRoot(_root,new bytes(0));
+                bridge.updateMerkleRoot(_root, _args);
                 merkleRootProposals[khash] = true;
                 emit ExecOperation(khash);
                 break;

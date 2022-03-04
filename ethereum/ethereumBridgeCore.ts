@@ -241,9 +241,7 @@ export class EthereumBridgeCore implements IBridgeCore {
     }
 
     private initBridgeCore() {
-        const filePath = path.join(this.env.contractdir,'/common/Contract_BridgeCore.sol');
-        const coreAbi = JSON.parse(compileContract(filePath,'BridgeCore','abi'));
-        this.bridgeCore = new this.web3.eth.Contract(coreAbi,this.config.ethereum.contracts.bridgeCore);
+        this.bridgeCore = this.env.contracts.ethereum.bridgeCore;
     }
 
     private convertToSN(event:EventData):BridgeSnapshoot {

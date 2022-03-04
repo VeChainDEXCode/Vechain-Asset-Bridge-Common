@@ -18,7 +18,7 @@ export class EthereumBridgeValidatorReader {
         let result = new ActionData<BaseProposal>();
         try {
             const args = this.argsRLP.encode({vbegin:vbegin,vend:vend,ebegin:ebegin,eend:eend});
-            const call = await this.bridgeValidator.methods.merkleRootProposals(root,args).call();
+            const call = await this.bridgeValidator.methods.getMerkleRootProposal(root,args).call();
             let p:BaseProposal = {
                 root:root,
                 executed:Boolean(call)
@@ -31,9 +31,7 @@ export class EthereumBridgeValidatorReader {
     }
 
     private initValidator(){
-        const filePath = path.join(this.env.contractdir,'/ethereum/Contract_EthereumBridgeValidator.sol');
-        const abi = JSON.parse(compileContract(filePath,'EthereumBridgeValidator','abi',[this.env.contractdir]));
-        this.bridgeValidator = new this.web3.eth.Contract(abi,this.config.ethereum.contracts.e2vBridgeVerifier);
+        this.bridgeValidator = this.env.contracts.ethereum.bridgeValidator;
     }
 
     protected env:any;
@@ -67,7 +65,7 @@ export class EthereumBridgeValidator extends EthereumBridgeValidatorReader {
             const gas = await this.bridgeValidator.methods.updateBridgeMerkleRoot(root,args,signs,blockRef,expirnum)
                 .estimateGas();
             const receipt = await this.bridgeValidator.methods.updateBridgeMerkleRoot(root,args,signs,blockRef,expirnum).send({
-                form:this.wallet.list[0].address,
+                from:this.wallet.list[0].address,
                 gas:gas,
                 gasprice:gasprice
             }).on('error',(error:any) => {

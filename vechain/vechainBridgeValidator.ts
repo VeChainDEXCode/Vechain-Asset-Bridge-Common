@@ -86,9 +86,7 @@ export class VeChainBridgeValidatorReader {
     }
 
     private initValidator(){
-        const filePath = path.join(this.env.contractdir,"/vechain/Contract_VeChainBridgeValidator.sol");
-        const validatorAbi = JSON.parse(compileContract(filePath,'VeChainBridgeValidator','abi',[this.env.contractdir]));
-        this.bridgeValidator = new Contract({abi:validatorAbi,connex:this.connex,address:this.config.vechain.contracts.bridgeValidator});
+        this.bridgeValidator = this.env.contracts.vechain.bridgeValidator;
         this.ValidatorChangedEvent = new abi.Event(this.bridgeValidator.ABI("ValidatorChanged","event") as any);
     }
 
@@ -125,7 +123,7 @@ export class VeChainBridgeValidator extends VeChainBridgeValidatorReader {
             const clause = this.bridgeValidator.send('updateMerkleRoot',0,root,args,sign);
             const txrep = await this.connex.vendor.sign('tx',[clause])
                 .signer(this.wallet.list[0].address)
-                .gas(300000)
+                .gas(600000)
                 .request();
             result.data = txrep.txid;
         } catch (error) {

@@ -228,9 +228,7 @@ export class VeChainBridgeCore implements IBridgeCore {
 
 
     private initBridgeCore() {
-        const filePath = path.join(this.env.contractdir,'/common/Contract_BridgeCore.sol');
-        const coreAbi = JSON.parse(compileContract(filePath,'BridgeCore','abi'));
-        this.bridgeCore = new Contract({abi:coreAbi,connex:this.connex,address:this.config.vechain.contracts.bridgeCore});
+        this.bridgeCore = this.env.contracts.vechain.bridgeCore;
         this.updateMerkleRootEvent = new abi.Event(this.bridgeCore.ABI('UpdateMerkleRoot','event') as any);
         this.submitHashEvent = new abi.Event(this.bridgeCore.ABI('SubmitHashEvent','event') as any);
     }
