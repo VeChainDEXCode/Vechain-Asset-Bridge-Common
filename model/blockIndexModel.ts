@@ -110,7 +110,7 @@ export default class BlockIndexModel {
         return result;
     }
 
-    public async delete(chainname:string,chainid:string,range:BlockRange):Promise<ActionResult>{
+    public async removeByBlockRange(chainname:string,chainid:string,range:BlockRange):Promise<ActionResult>{
         let result = new ActionResult();
 
         try {
@@ -121,11 +121,13 @@ export default class BlockIndexModel {
             .where("chainname = :name",{name:chainname})
             .andWhere("chainid = :id",{id:chainid})
 
-            query = range.blockNum != undefined && range.blockNum.from != undefined ? query.andWhere("blocknum >= :num",{num:range.blockNum.from}) : query;
-            query = range.blockNum != undefined && range.blockNum.to != undefined ? query.andWhere("blocknum <= :num",{num:range.blockNum.to}) : query;
-            query = range.blockids != undefined && range.blockids.length > 0 ? query.andWhere("blockid IN (:list)",{list:range.blockids}) : query;
+            if((range.blockids != undefined && range.blockids.length > 0) || range.blockNum?.from != undefined || range.blockNum?.to != undefined){
+                query = range.blockNum != undefined && range.blockNum.from != undefined ? query.andWhere("blocknum >= :num",{num:range.blockNum.from}) : query;
+                query = range.blockNum != undefined && range.blockNum.to != undefined ? query.andWhere("blocknum <= :num",{num:range.blockNum.to}) : query;
+                query = range.blockids != undefined && range.blockids.length > 0 ? query.andWhere("blockid IN (:list)",{list:range.blockids}) : query;
 
-            await query.execute();   
+                await query.execute();   
+            }
         } catch (error) {
             result.error = error;
         }

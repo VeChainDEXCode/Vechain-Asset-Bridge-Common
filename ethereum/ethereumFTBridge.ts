@@ -44,20 +44,19 @@ export class EthereumFTBridge {
                         blockId:swapEv.blockHash,
                         txid:swapEv.transactionHash,
                         index:swapEv.logIndex,
-                        token:swapEv.returnValues[0] as string,
+                        swapTxHash:swapEv.returnValues[0] as string,
+                        token:swapEv.returnValues[1] as string,
                         amount:BigInt(0),
                         timestamp:blockCache.get(swapEv.blockHash)!.timestamp as number,
                         recipient:swapEv.returnValues[2] as string,
                         type:BridgeTxType.swap,
-                        swapTxHash:"",
-                        from:swapEv.returnValues[1] as string,
-                        reward:BigInt(swapEv.returnValues[4]),
-                        amountOut:BigInt(swapEv.returnValues[3]),
-                        swapCount:BigInt(swapEv.returnValues[5])
+                        from:swapEv.returnValues[3] as string,
+                        amountOut:BigInt(swapEv.returnValues[4]),
+                        reward:BigInt(swapEv.returnValues[5]),
+                        swapCount:BigInt(swapEv.returnValues[6])
                     }
                     swaptx.bridgeTxId = bridgeTxId(swaptx);
                     swaptx.amount = swaptx.reward + swaptx.amountOut;
-                    swaptx.swapTxHash = swapTxHash(swaptx);
                     result.data.push(swaptx);
                 }
 
@@ -75,10 +74,11 @@ export class EthereumFTBridge {
                         blockId:claimEv.blockHash,
                         txid:claimEv.transactionHash,
                         index:claimEv.logIndex,
-                        token:claimEv.returnValues[0] as string,
-                        amount:BigInt(claimEv.returnValues[2]),
+                        swapTxHash:claimEv.returnValues[0] as string,
+                        token:claimEv.returnValues[1] as string,
+                        recipient:claimEv.returnValues[2] as string,
+                        amount:BigInt(claimEv.returnValues[3]),
                         timestamp:blockCache.get(claimEv.blockHash)!.timestamp as number,
-                        recipient:claimEv.returnValues[1] as string,
                         type:BridgeTxType.claim
                     }
                     claimtx.bridgeTxId = bridgeTxId(claimtx);

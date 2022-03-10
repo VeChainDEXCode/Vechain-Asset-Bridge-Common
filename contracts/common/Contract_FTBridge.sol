@@ -55,15 +55,17 @@ contract FTBridge {
     uint256 public swapCount;
 
     event Swap(
+        bytes32 indexed _swaphash,
         address indexed _token,
-        address indexed _from,
         address indexed _recipient,
+        address  _from,
         uint256 _amountOut,
         uint256 _reward,
         uint256 _swapcount
     );
 
     event Claim(
+        bytes32 indexed _swaphash,
         address indexed _token,
         address indexed _recipient,
         uint256 _amount
@@ -115,7 +117,7 @@ contract FTBridge {
         swapCount++;
         (uint256 amountOut, uint256 reward) = IFTBridgeTokens(bridgeTokens).amountReward(_token, _amount);
         bytes32 swaphash = this.swapHash(chainname,chainid,_recipient, _token, _amount,swapCount);
-        emit Swap(_token, msg.sender, _recipient, amountOut, reward, swapCount);
+        emit Swap(swaphash,_token, _recipient, msg.sender, amountOut, reward, swapCount);
         iBridgeCore(bridgeCore).submitHash(appid, swaphash);
         return true;
     }
@@ -145,7 +147,7 @@ contract FTBridge {
         swapCount++;
         (uint256 amountOut, uint256 reward) = IFTBridgeTokens(bridgeTokens).amountReward(wrappedNativeToken, msg.value);
         bytes32 swaphash = this.swapHash(chainname,chainid,_recipient, wrappedNativeToken, amountOut,swapCount);
-        emit Swap(wrappedNativeToken, msg.sender, _recipient, amountOut, reward, swapCount);
+        emit Swap(swaphash,wrappedNativeToken, _recipient, msg.sender, amountOut, reward, swapCount);
         iBridgeCore(bridgeCore).submitHash(appid, swaphash);
         return true;
     }
@@ -175,7 +177,7 @@ contract FTBridge {
             claimWrappedToken(_token, _recipient, _amount);
         }
         claimed[_root][swaphash] = true;
-        emit Claim(_token, _recipient, _amount);
+        emit Claim(swaphash,_token, _recipient, _amount);
         return true;
     }
 
@@ -211,7 +213,7 @@ contract FTBridge {
         _recipient.transfer(_amount);
 
         claimed[_root][swaphash] = true;
-        emit Claim(wrappedNativeToken, _recipient, _amount);
+        emit Claim(swaphash,wrappedNativeToken, _recipient, _amount);
         return true;
     }
 

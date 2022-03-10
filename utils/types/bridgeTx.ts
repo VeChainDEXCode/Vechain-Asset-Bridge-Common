@@ -18,10 +18,10 @@ export type BaseBridgeTx = {
     timestamp:number;
     recipient:string;
     type:BridgeTxType;
+    swapTxHash:string;
 }
 
 export type SwapBridgeTx = BaseBridgeTx & {
-    swapTxHash:string;
     from:string;
     reward:bigint;
     amountOut:bigint;

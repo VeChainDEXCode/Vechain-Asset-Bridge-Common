@@ -176,6 +176,42 @@ export class SnapshootModel {
             result.error = error;
         }
         return result;
+    }
+
+    public async removeByBlockRange(chainName:string,chainId:string,range:BlockRange):Promise<ActionResult>{
+        let result = new ActionResult();
+
+        try {
+            await getManager().transaction(async trans => {
+                let query = trans.createQueryBuilder()
+                    .delete()
+                    .from(SnapshootEntity);
+                
+                if(chainName == this.config.vechain.chainName && chainId == this.config.vechain.chainId){
+                    query.where('chainname_0 = :name',{name:chainName})
+                    .andWhere('chainid_0 = :id',{id:chainId});
+                    
+                    if(range.blockNum?.from != undefined || range.blockNum?.to != undefined){
+                        query = range.blockNum?.from != undefined ? query.andWhere('end_blocknum_0 >= :num',{num:range.blockNum.from}) : query;
+                        query = range.blockNum?.to != undefined ? query.andWhere('end_blocknum_0 <= :num',{num:range.blockNum.to}) : query;
+                        await query.execute();
+                    }
+                }
+
+                if(chainName == this.config.ethereum.chainName && chainId == this.config.ethereum.chainId){
+                    query.where('chainname_1 = :name',{name:chainName})
+                    .andWhere('chainid_1 = :id',{id:chainId});
+                    
+                    if(range.blockNum?.from != undefined || range.blockNum?.to != undefined){
+                        query = range.blockNum?.from != undefined ? query.andWhere('end_blocknum_1 >= :num',{num:range.blockNum.from}) : query;
+                        query = range.blockNum?.to != undefined ? query.andWhere('end_blocknum_1 <= :num',{num:range.blockNum.to}) : query;
+                        await query.execute();
+                    }
+                }
+            });
+        } catch (error) {
+            result.error = error;
+        }
 
         return result;
     }

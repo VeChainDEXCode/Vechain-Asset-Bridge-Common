@@ -3,7 +3,7 @@ import { Contract } from "myvetools";
 import { compileContract } from "myvetools/dist/utils";
 import path from "path";
 import { abi } from "thor-devkit";
-import { ActionData } from "../utils/components/actionResult";
+import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BaseBridgeTx, bridgeTxId, BridgeTxType, ClaimBridgeTx, SwapBridgeTx, swapTxHash } from "../utils/types/bridgeTx";
 import { TokenInfo } from "../utils/types/tokenInfo";
 import { getAllEvents } from "./vechainCommon";
@@ -54,20 +54,19 @@ export class VeChainFTBridge {
                             blockId:ev.meta.blockID,
                             txid:ev.meta.txID,
                             index:evIndex,
-                            token:evDecode[0] as string,
+                            swapTxHash:evDecode[0] as string,
+                            token:evDecode[1] as string,
                             amount:BigInt(0),
                             timestamp:ev.meta.blockTimestamp,
                             recipient:evDecode[2] as string,
                             type:BridgeTxType.swap,
-                            swapTxHash:"",
-                            from:evDecode[1] as string,
-                            reward:BigInt(evDecode[4]),
-                            amountOut:BigInt(evDecode[3]),
-                            swapCount:BigInt(evDecode[5])
+                            from:evDecode[3] as string,
+                            amountOut:BigInt(evDecode[4]),
+                            reward:BigInt(evDecode[5]),
+                            swapCount:BigInt(evDecode[6])
                         }
                         swaptx.bridgeTxId = bridgeTxId(swaptx);
                         swaptx.amount = swaptx.reward + swaptx.amountOut;
-                        swaptx.swapTxHash = swapTxHash(swaptx);
                         result.data.push(swaptx);
                     } else if (ev.topics[0] == this.claimEvent.signature){
                         const evDecode = this.claimEvent.decode(ev.data,ev.topics);
@@ -79,10 +78,11 @@ export class VeChainFTBridge {
                             blockId:ev.meta.blockID,
                             txid:ev.meta.txID,
                             index:evIndex,
-                            token:evDecode[0] as string,
-                            amount:BigInt(evDecode[2]),
+                            swapTxHash:evDecode[0] as string,
+                            token:evDecode[1] as string,
+                            recipient:evDecode[2] as string,
+                            amount:BigInt(evDecode[3]),
                             timestamp:ev.meta.blockTimestamp,
-                            recipient:evDecode[1] as string,
                             type:BridgeTxType.claim
                         }
                         claimtx.bridgeTxId = bridgeTxId(claimtx);

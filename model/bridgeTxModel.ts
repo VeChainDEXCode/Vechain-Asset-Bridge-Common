@@ -1,5 +1,6 @@
 import { Equal, getConnection, getManager, getRepository } from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
+import { BlockRange } from "../utils/types/blockRange";
 import { BridgeSnapshoot } from "../utils/types/bridgeSnapshoot";
 import { BaseBridgeTx,SwapBridgeTx,ClaimBridgeTx, bridgeTxId, swapTxHash, BridgeTxType, amountOut } from "../utils/types/bridgeTx";
 import { BridgeTxEntity } from "./entities/bridgeTx.entity";
@@ -237,16 +238,22 @@ export default class BridgeTxModel{
         return result;
     }
 
-    public async removeByBlockIds(chainName:string,chainId:string,blockIds:string[]):Promise<ActionResult>{
+    public async removeByBlockRange(chainName:string,chainId:string,range:BlockRange):Promise<ActionResult>{
         let result = new ActionResult();
 
         try {
             await getManager().transaction(async trans => {
-                for(const blockId of blockIds){
-                    await trans.delete(
-                        BridgeTxEntity,
-                        {blockId:blockId,chainName:chainName,chainId:chainId}
-                    );
+                let query = trans.createQueryBuilder()
+                    .delete()
+                    .from(BridgeTxEntity)
+                    .where('chainname = :name',{name:chainName})
+                    .andWhere('chainid = :id',{id:chainId});
+                
+                if((range.blockids != undefined && range.blockids.length > 0) || range.blockNum?.from != undefined || range.blockNum?.to != undefined){
+                    query = range.blockNum != undefined && range.blockNum.from != undefined ? query.andWhere("blocknum >= :num",{num:range.blockNum.from}) : query;
+                    query = range.blockNum != undefined && range.blockNum.to != undefined ? query.andWhere("blocknum <= :num",{num:range.blockNum.to}) : query;
+                    query = range.blockids != undefined && range.blockids.length > 0 ? query.andWhere("blockid IN (:list)",{list:range.blockids}) : query;
+                    await query.execute();
                 }
             });
         } catch (error) {
