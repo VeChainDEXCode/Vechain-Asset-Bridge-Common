@@ -28,7 +28,8 @@ export default class BridgeTxModel{
                     entity.token = tx.token;
                     entity.amount = '0x' + tx.amount.toString(16);
                     entity.timestamp = tx.timestamp;
-                    entity.recipient = tx.recipient;entity.type
+                    entity.recipient = tx.recipient;
+                    entity.swapTxHash = tx.swapTxHash;
                     if(tx.type == BridgeTxType.swap){
                         entity.type = 1;
                         entity.from = (tx as SwapBridgeTx).from;
@@ -76,7 +77,8 @@ export default class BridgeTxModel{
                     amount:BigInt(data.amount),
                     timestamp:data.timestamp,
                     recipient:data.recipient,
-                    type:data.type
+                    type:data.type,
+                    swapTxHash:data.swapTxHash
                 }
                 if(tx.type == BridgeTxType.swap){
                     (tx as SwapBridgeTx).from = data.from;
@@ -127,7 +129,8 @@ export default class BridgeTxModel{
                     amount:BigInt(data.amount),
                     timestamp:data.timestamp,
                     recipient:data.recipient,
-                    type:BridgeTxType.claim
+                    type:BridgeTxType.claim,
+                    swapTxHash:data.swapTxHash
                 };
                 result.data.push(claimTx);
             }
@@ -174,13 +177,12 @@ export default class BridgeTxModel{
                     timestamp:item.timestamp,
                     recipient:item.recipient,
                     type:BridgeTxType.swap,
-                    swapTxHash:"",
                     from:item.from,
                     reward:BigInt(item.reward),
                     amountOut:BigInt(0),
-                    swapCount:BigInt(item.swapCount)
+                    swapCount:BigInt(item.swapCount),
+                    swapTxHash:item.swapTxHash
                     };
-                bridgeTx.swapTxHash = swapTxHash(bridgeTx);
                 bridgeTx.amountOut = amountOut(bridgeTx);
                 result.data.push(bridgeTx);
             }
@@ -220,14 +222,14 @@ export default class BridgeTxModel{
                         amount:BigInt(item.amount),
                         timestamp:item.timestamp,
                         recipient:item.recipient,
-                        type:item.type
+                        type:item.type,
+                        swapTxHash:item.swapTxHash
                         };
                     if(bridgeTx.type == BridgeTxType.swap){
                         (bridgeTx as SwapBridgeTx).from = item.from;
                         (bridgeTx as SwapBridgeTx).reward = BigInt(item.reward);
                         (bridgeTx as SwapBridgeTx).swapCount = BigInt(item.swapCount);
                         (bridgeTx as SwapBridgeTx).amountOut = amountOut(bridgeTx as SwapBridgeTx);
-                        (bridgeTx as SwapBridgeTx).swapTxHash = swapTxHash(bridgeTx as SwapBridgeTx);
                     }
                     result.data.push(bridgeTx);
                 }

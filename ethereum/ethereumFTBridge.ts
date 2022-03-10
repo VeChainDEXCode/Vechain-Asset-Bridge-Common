@@ -139,13 +139,8 @@ export class EthereumFTBridge {
     }
 
     private initContract(){
-        const ftBridgeFile = path.join(this.env.contractdir,'/common/Contract_FTBridge.sol');
-        const ftBridgeAbi = JSON.parse(compileContract(ftBridgeFile,'FTBridge','abi'));
-        this.ftBridge = new this.web3.eth.Contract(ftBridgeAbi,this.config.ethereum.ftBridge);
-
-        const ftBridgeTokensFile = path.join(this.env.contractdir,'/common/Contract_FTBridgeTokens.sol');
-        const ftBridgeTokensAbi = JSON.parse(compileContract(ftBridgeTokensFile,'FTBridgeTokens','abi'));
-        this.ftBridgeTokens = new this.web3.eth.Contract(ftBridgeTokensAbi,this.config.ethereum.ftBridgeTokens);
+        this.ftBridge = this.env.contracts.ethereum.ftBridge;
+        this.ftBridgeTokens = this.env.contracts.ethereum.ftBridgeTokens;
     }
 
     private env:any;

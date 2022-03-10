@@ -152,15 +152,11 @@ export class VeChainFTBridge {
     }
 
     private initContract(){
-        const ftBridgeFile = path.join(this.env.contractdir,'/common/Contract_FTBridge.sol');
-        const ftBridgeAbi = JSON.parse(compileContract(ftBridgeFile,'FTBridge','abi'));
-        this.ftBridge = new Contract({connex:this.connex,abi:ftBridgeAbi,address:this.config.vechain.contracts.ftBridge});
+        this.ftBridge = this.env.contracts.vechain.ftBridge;
         this.swapEvent = new abi.Event(this.ftBridge.ABI('Swap','event') as any);
         this.claimEvent = new abi.Event(this.ftBridge.ABI('Claim','event') as any);
 
-        const ftBridgeTokensFile = path.join(this.env.contractdir,'/common/Contract_FTBridgeTokens.sol');
-        const ftBridgeTokensAbi = JSON.parse(compileContract(ftBridgeTokensFile,'FTBridgeTokens','abi'));
-        this.ftBridgeTokens = new Contract({connex:this.connex,abi:ftBridgeTokensAbi,address:this.config.vechain.contracts.ftBridgeTokens});
+        this.ftBridgeTokens = this.env.contracts.vechain.ftBridgeTokens;
         this.tokenUpdatedEvent = new abi.Event(this.ftBridgeTokens.ABI('TokenUpdated','event') as any);
     }
 
