@@ -4,7 +4,7 @@ import path from "path";
 import { compileContract } from "myvetools/dist/utils";
 import { ActionData } from "../utils/components/actionResult";
 import { BaseBridgeTx, bridgeTxId, BridgeTxType, ClaimBridgeTx, SwapBridgeTx, swapTxHash } from "../utils/types/bridgeTx";
-import { TokenInfo } from "../utils/types/tokenInfo";
+import { tokenid, TokenInfo } from "../utils/types/tokenInfo";
 import Web3Eth from 'web3-eth';
 import { ERC20Token } from "./erc20Token";
 
@@ -106,7 +106,6 @@ export class EthereumFTBridge {
                 const events = await this.ftBridgeTokens.getPastEvents('TokenUpdated',{fromBlock:from,toBlock:to});
                 for(const ev of events){
                     const tokenAddr = ev.returnValues[0] as string;
-                    const call = await this.ftBridgeTokens.methods.tokens(tokenAddr).call();
                     const token = new ERC20Token(tokenAddr,this.web3);
                     const baseInfo = await token.baseInfo();
                     const tokenInfo:TokenInfo = {
@@ -117,17 +116,18 @@ export class EthereumFTBridge {
                         symbol:baseInfo.symbol,
                         decimals:baseInfo.decimals,
                         tokenAddr:tokenAddr,
-                        nativeCoin:baseInfo.symbol.toUpperCase() == "WETH" ? true : false,
-                        tokenType:call.tokenType as number,
-                        targetTokenAddr:call.tToken as string,
-                        targetChainName:call.tChainname as string,
-                        targetChainId:call.tChainId as string,
-                        begin:call.begin as number,
-                        end:call.end as number,
-                        reward:call.reward as number,
+                        nativeCoin:ev.returnValues._native as boolean,
+                        tokenType:ev.returnValues._type as number,
+                        targetTokenAddr:ev.returnValues._token as string,
+                        targetChainName:this.config.vechain.chainName,
+                        targetChainId:this.config.vechain.chainId,
+                        begin:ev.returnValues._begin as number,
+                        end:ev.returnValues._end as number,
+                        reward:ev.returnValues._reward as number,
                         updateBlockNum:ev.blockNumber,
                         updateBlockId:ev.blockHash
                     }
+                    tokenInfo.tokenid = tokenid(tokenInfo.chainName,tokenInfo.chainId,tokenInfo.tokenAddr);
                     result.data.push(tokenInfo);
                 }
                 block = to + 1;

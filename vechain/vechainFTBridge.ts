@@ -5,7 +5,7 @@ import path from "path";
 import { abi } from "thor-devkit";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BaseBridgeTx, bridgeTxId, BridgeTxType, ClaimBridgeTx, SwapBridgeTx, swapTxHash } from "../utils/types/bridgeTx";
-import { TokenInfo } from "../utils/types/tokenInfo";
+import { tokenid, TokenInfo } from "../utils/types/tokenInfo";
 import { getAllEvents } from "./vechainCommon";
 import { VIP180Token } from "./vip180Token";
 
@@ -112,7 +112,7 @@ export class VeChainFTBridge {
                 console.debug(`scan vechain tokenInfos blocknum: ${from} - ${to}`);
 
                 const filter = this.connex.thor.filter('event',[{
-                    address:this.config.vechain.contracts.ftBridgeTokens,topic0:this.tokenUpdatedEvent.signature
+                    address:this.ftBridgeTokens.address,topic0:this.tokenUpdatedEvent.signature
                 }]).order('asc').range({unit:'block',from:from,to:to});
 
                 const events = await getAllEvents(filter);
@@ -120,7 +120,6 @@ export class VeChainFTBridge {
                 for(const ev of events){
                     const evDecode = this.tokenUpdatedEvent.decode(ev.data,ev.topics);
                     const tokenAddr = evDecode[0] as string;
-                    const call = await this.ftBridgeTokens.call('tokens',tokenAddr);
                     const token = new VIP180Token(tokenAddr,this.connex);
                     const baseInfo = await token.baseInfo();
                     const tokenInfo:TokenInfo = {
@@ -131,17 +130,18 @@ export class VeChainFTBridge {
                         symbol:baseInfo.symbol,
                         decimals:baseInfo.decimals,
                         tokenAddr:tokenAddr,
-                        nativeCoin:baseInfo.symbol.toUpperCase() == "VVET" ? true : false,
-                        tokenType:call.decoded[0] as number,
-                        targetTokenAddr:call.decoded[1] as string,
-                        targetChainName:call.decoded[2] as string,
-                        targetChainId:call.decoded[3] as string,
-                        begin:call.decoded[4] as number,
-                        end:call.decoded[5] as number,
-                        reward:call.decoded[6] as number,
+                        nativeCoin:evDecode._native as boolean,
+                        tokenType:evDecode._type as number,
+                        targetTokenAddr:evDecode._ttoken as string,
+                        targetChainName:this.config.ethereum.chainName,
+                        targetChainId:this.config.ethereum.chainId,
+                        begin:evDecode._begin as number,
+                        end:evDecode._end as number,
+                        reward:evDecode._reward as number,
                         updateBlockNum:ev.meta.blockNumber,
                         updateBlockId:ev.meta.blockID
                     }
+                    tokenInfo.tokenid = tokenid(tokenInfo.chainName,tokenInfo.chainId,tokenInfo.tokenAddr);
                     result.data.push(tokenInfo);
                 }
                 block = to + 1;
