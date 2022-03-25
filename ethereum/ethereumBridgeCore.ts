@@ -4,8 +4,6 @@ import { IBridgeCore } from "../utils/iBridgeCore";
 import { ActionData } from "../utils/components/actionResult";
 import { BridgeSnapshoot, ZeroRoot } from "../utils/types/bridgeSnapshoot";
 import { HashEvent } from "../utils/types/hashEvent";
-import path from "path";
-import { compileContract } from "myvetools/dist/utils";
 import { RLP } from "thor-devkit";
 import Web3Eth from 'web3-eth';
 
@@ -86,6 +84,7 @@ export class EthereumBridgeCore implements IBridgeCore {
                     const sn = this.convertToSN(ev);
                     result.data.push(sn);
                 }
+                blockNum = to - 1;
             }
         } catch (error) {
             result.error = error;

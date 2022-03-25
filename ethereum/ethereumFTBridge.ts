@@ -84,6 +84,7 @@ export class EthereumFTBridge {
                     claimtx.bridgeTxId = bridgeTxId(claimtx);
                     result.data!.push(claimtx);
                 }
+                block = to + 1;
             }   
         } catch (error) {
             result.error = error;
@@ -117,19 +118,19 @@ export class EthereumFTBridge {
                         decimals:baseInfo.decimals,
                         tokenAddr:tokenAddr,
                         nativeCoin:baseInfo.symbol.toUpperCase() == "WETH" ? true : false,
-                        tokenType:call.returnValues[0] as number,
-                        targetTokenAddr:call.returnValues[1] as string,
-                        targetChainName:call.returnValues[2] as string,
-                        targetChainId:call.returnValues[3] as string,
-                        begin:call.returnValues[4] as number,
-                        end:call.returnValues[5] as number,
-                        reward:call.returnValues[6] as number,
+                        tokenType:call.tokenType as number,
+                        targetTokenAddr:call.tToken as string,
+                        targetChainName:call.tChainname as string,
+                        targetChainId:call.tChainId as string,
+                        begin:call.begin as number,
+                        end:call.end as number,
+                        reward:call.reward as number,
                         updateBlockNum:ev.blockNumber,
                         updateBlockId:ev.blockHash
                     }
                     result.data.push(tokenInfo);
                 }
-
+                block = to + 1;
             }
         } catch (error) {
             result.error = error;

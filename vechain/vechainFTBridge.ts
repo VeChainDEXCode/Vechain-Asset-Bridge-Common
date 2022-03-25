@@ -144,6 +144,7 @@ export class VeChainFTBridge {
                     }
                     result.data.push(tokenInfo);
                 }
+                block = to + 1;
             }
         } catch (error) {
             result.error = error;   

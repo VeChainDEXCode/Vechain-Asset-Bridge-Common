@@ -64,6 +64,7 @@ export default class TokenInfoModel {
                     entity.targetChainId = token.targetChainId;
                     entity.begin = token.begin;
                     entity.end = token.end;
+                    entity.reward = token.reward;
                     entity.updateBlockNum = token.updateBlockNum;
                     entity.updateBlockId = token.updateBlockId;
                     await transactionalEntityManager.save(entity);

@@ -2,9 +2,7 @@ import { Framework } from "@vechain/connex-framework";
 import { IBridgeCore } from "../utils/iBridgeCore";
 import { ActionData } from "../utils/components/actionResult";
 import { BridgeSnapshoot, ZeroRoot } from "../utils/types/bridgeSnapshoot";
-import path from "path";
 import { Contract } from "myvetools";
-import { compileContract } from "myvetools/dist/utils";
 import { HashEvent } from "../utils/types/hashEvent";
 import { abi, RLP } from "thor-devkit";
 import { getAllEvents } from "./vechainCommon";
@@ -44,31 +42,35 @@ export class VeChainBridgeCore implements IBridgeCore {
         let txid:string = "";
         let blocknum:number = 0;
 
-        let begin = this.config.vechain.startBlockNum;
-        let end = (await this.connex.thor.block().get())!.number;
+        try {
+            let begin = this.config.vechain.startBlockNum;
+            let end = (await this.connex.thor.block().get())!.number;
 
-        for(let bNum = end;bNum > begin;){
-            let from = bNum - this.scanBlockStep >= begin ? bNum - this.scanBlockStep + 1: begin;
-            let to = bNum;
-            const events = await filter.range({unit:"block",from:from,to:to}).apply(0,1);
-            if(events.length == 1){
-                sn = this.convertToSN(events[0]);
-                txid = events[0].meta.txID;
-                blocknum = events[0].meta.blockNumber;
-                break;
-            } else {
-                bNum = from;
-                continue;
+            for(let bNum = end;bNum >= begin;){
+                let from = bNum - this.scanBlockStep >= begin ? bNum - this.scanBlockStep + 1: begin;
+                let to = bNum;
+                const events = await filter.range({unit:"block",from:from,to:to}).apply(0,1);
+                if(events.length == 1){
+                    sn = this.convertToSN(events[0]);
+                    txid = events[0].meta.txID;
+                    blocknum = events[0].meta.blockNumber;
+                    break;
+                } else {
+                    bNum = from;
+                    continue;
+                }
             }
-        }
 
-        //Handle GenesisSnapshoot
-        if(sn.merkleRoot == (this.env.genesisSnapshoot as BridgeSnapshoot).merkleRoot){
-            result.data = {sn:this.env.genesisSnapshoot,txid:txid,blocknum:blocknum};
-            return result;
-        }
+            //Handle GenesisSnapshoot
+            if(sn.merkleRoot == (this.env.genesisSnapshoot as BridgeSnapshoot).merkleRoot){
+                result.data = {sn:this.env.genesisSnapshoot,txid:txid,blocknum:blocknum};
+                return result;
+            }
 
-        result.data = {sn:sn,txid:txid,blocknum:blocknum};
+            result.data = {sn:sn,txid:txid,blocknum:blocknum};   
+        } catch (error) {
+            result.error = error;
+        }
         return result;
     }
     
