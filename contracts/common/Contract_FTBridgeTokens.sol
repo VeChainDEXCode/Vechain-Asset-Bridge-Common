@@ -29,7 +29,7 @@ contract FTBridgeTokens {
 
     mapping(address => TokenInfo) public tokens;
 
-    event TokenUpdated(address indexed _token);
+    event TokenUpdated(address indexed _token,uint8 indexed _type,bool indexed _native,address _ttoken,uint256 _begin,uint256 _end,uint16 _reward);
 
     constructor(address _control) {
         bridgeControl = _control;
@@ -58,7 +58,7 @@ contract FTBridgeTokens {
             end: _end,
             reward: _reward
         });
-        emit TokenUpdated(_token);
+        emit TokenUpdated(_token, _type, false, _ttoken, _begin, _end, _reward);
     }
 
     function setWrappedNativeCoin(
@@ -84,7 +84,7 @@ contract FTBridgeTokens {
             end: _end,
             reward: _reward
         });
-        emit TokenUpdated(_token);
+        emit TokenUpdated(_token, ORIGINTOKEN, true, _ttoken, _begin, _end, _reward);
     }
 
     function tokenActivate(address _token) public view returns (bool) {
