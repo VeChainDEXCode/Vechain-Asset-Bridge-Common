@@ -1,9 +1,7 @@
 import { Framework } from "@vechain/connex-framework";
 import { Contract } from "myvetools";
-import { compileContract } from "myvetools/dist/utils";
-import path from "path";
 import { abi } from "thor-devkit";
-import { ActionData, ActionResult } from "../utils/components/actionResult";
+import { ActionData } from "../utils/components/actionResult";
 import { BaseBridgeTx, bridgeTxId, BridgeTxType, ClaimBridgeTx, SwapBridgeTx, swapTxHash } from "../utils/types/bridgeTx";
 import { tokenid, TokenInfo } from "../utils/types/tokenInfo";
 import { getAllEvents } from "./vechainCommon";
@@ -54,13 +52,13 @@ export class VeChainFTBridge {
                             blockId:ev.meta.blockID,
                             txid:ev.meta.txID,
                             index:evIndex,
-                            swapTxHash:evDecode[0] as string,
-                            token:evDecode[1] as string,
+                            swapTxHash:String(evDecode[0]),
+                            token:String(evDecode[1]),
                             amount:BigInt(0),
                             timestamp:ev.meta.blockTimestamp,
-                            recipient:evDecode[2] as string,
+                            recipient:String(evDecode[2]),
                             type:BridgeTxType.swap,
-                            from:evDecode[3] as string,
+                            from:String(evDecode[3]),
                             amountOut:BigInt(evDecode[4]),
                             reward:BigInt(evDecode[5]),
                             swapCount:BigInt(evDecode[6])
@@ -78,9 +76,9 @@ export class VeChainFTBridge {
                             blockId:ev.meta.blockID,
                             txid:ev.meta.txID,
                             index:evIndex,
-                            swapTxHash:evDecode[0] as string,
-                            token:evDecode[1] as string,
-                            recipient:evDecode[2] as string,
+                            swapTxHash:String(evDecode[0]),
+                            token:String(evDecode[1]),
+                            recipient:String(evDecode[2]),
                             amount:BigInt(evDecode[3]),
                             timestamp:ev.meta.blockTimestamp,
                             type:BridgeTxType.claim
@@ -119,7 +117,7 @@ export class VeChainFTBridge {
 
                 for(const ev of events){
                     const evDecode = this.tokenUpdatedEvent.decode(ev.data,ev.topics);
-                    const tokenAddr = evDecode[0] as string;
+                    const tokenAddr = String(evDecode[0]);
                     const token = new VIP180Token(tokenAddr,this.connex);
                     const baseInfo = await token.baseInfo();
                     const tokenInfo:TokenInfo = {
@@ -130,14 +128,14 @@ export class VeChainFTBridge {
                         symbol:baseInfo.symbol,
                         decimals:baseInfo.decimals,
                         tokenAddr:tokenAddr,
-                        nativeCoin:evDecode._native as boolean,
-                        tokenType:evDecode._type as number,
-                        targetTokenAddr:evDecode._ttoken as string,
+                        nativeCoin:Boolean(evDecode._native),
+                        tokenType:Number(evDecode._type),
+                        targetTokenAddr:String(evDecode._ttoken),
                         targetChainName:this.config.ethereum.chainName,
                         targetChainId:this.config.ethereum.chainId,
-                        begin:evDecode._begin as number,
-                        end:evDecode._end as number,
-                        reward:evDecode._reward as number,
+                        begin:Number(evDecode._begin),
+                        end:Number(evDecode._end),
+                        reward:Number(evDecode._reward),
                         updateBlockNum:ev.meta.blockNumber,
                         updateBlockId:ev.meta.blockID
                     }

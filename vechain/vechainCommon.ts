@@ -115,8 +115,8 @@ export class VeChainCommon {
                     break;
                 }
                 result.data.push({
-                    chainName:this.config.vechain.chainName as string,
-                    chainId:this.config.vechain.chainId as string,
+                    chainName:String(this.config.vechain.chainName),
+                    chainId:String(this.config.vechain.chainId),
                     blockId:block.id,
                     blockNum:block.number,
                     timestamp:block.timestamp

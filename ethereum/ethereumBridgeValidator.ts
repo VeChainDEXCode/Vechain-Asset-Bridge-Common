@@ -60,7 +60,7 @@ export class EthereumBridgeValidator extends EthereumBridgeValidatorReader {
         let result = new ActionData<string>();
         try {
             const blockRef = await this.web3.eth.getBlockNumber();
-            const expirnum = this.config.ethereum.expiration as number;
+            const expirnum = Number(this.config.ethereum.expiration);
             const gasprice = await this.web3.eth.getGasPrice();
             const gas = await this.bridgeValidator.methods.updateBridgeMerkleRoot(root,args,signs,blockRef,expirnum)
                 .estimateGas();

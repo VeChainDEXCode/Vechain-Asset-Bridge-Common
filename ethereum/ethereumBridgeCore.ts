@@ -128,10 +128,10 @@ export class EthereumBridgeCore implements IBridgeCore {
                         blockId:ev.blockHash,
                         txid:ev.transactionHash,
                         index:ev.logIndex,
-                        timestamp:blockCache.get(ev.blockNumber)!.timestamp as number,
-                        appid:ev.returnValues['_appid'] as string,
-                        sender:ev.returnValues['_sender'] as string,
-                        hash:ev.returnValues['_value'] as string
+                        timestamp:Number(blockCache.get(ev.blockNumber)!.timestamp),
+                        appid:String(ev.returnValues['_appid']),
+                        sender:String(ev.returnValues['_sender']),
+                        hash:String(ev.returnValues['_value'])
                     }
                     result.data.push(submithash);
                 }
@@ -165,14 +165,14 @@ export class EthereumBridgeCore implements IBridgeCore {
                         {
                             chainName:this.config.vechain.chainName,
                             chainId:this.config.vechain.chainId,
-                            beginBlockNum:rlpDecode.vbegin as number,
-                            endBlockNum:rlpDecode.vend as number
+                            beginBlockNum:Number(rlpDecode.vbegin),
+                            endBlockNum:Number(rlpDecode.vend)
                         },
                         {
                             chainName:this.config.ethereum.chainName,
                             chainId:this.config.ethereum.chainId,
-                            beginBlockNum:rlpDecode.ebegin as number,
-                            endBlockNum:rlpDecode.eend as number
+                            beginBlockNum:Number(rlpDecode.ebegin),
+                            endBlockNum:Number(rlpDecode.eend)
                         }
                 ]}
             }
@@ -198,21 +198,21 @@ export class EthereumBridgeCore implements IBridgeCore {
             if(infoDecode.index != 0){
                 const rlpDecode = this.argsRLP.decode(infoDecode.args);
                 result.data = {
-                    index:infoDecode.index as number,
+                    index:Number(infoDecode.index),
                     sn:{
                         merkleRoot:root,
                         chains:[
                             {
                                 chainName:this.config.vechain.chainName,
                                 chainId:this.config.vechain.chainId,
-                                beginBlockNum:rlpDecode.vbegin as number,
-                                endBlockNum:rlpDecode.vend as number
+                                beginBlockNum:Number(rlpDecode.vbegin),
+                                endBlockNum:Number(rlpDecode.vend)
                             },
                             {
                                 chainName:this.config.ethereum.chainName,
                                 chainId:this.config.ethereum.chainId,
-                                beginBlockNum:rlpDecode.ebegin as number,
-                                endBlockNum:rlpDecode.eend as number
+                                beginBlockNum:Number(rlpDecode.ebegin),
+                                endBlockNum:Number(rlpDecode.eend)
                             }
                     ]}
                 }
@@ -259,11 +259,11 @@ export class EthereumBridgeCore implements IBridgeCore {
             }]
         }
         const rlpDecode = this.argsRLP.decode(event.returnValues['_args']);
-        sn.merkleRoot = event.returnValues['_root'] as string;
-        sn.chains[0].beginBlockNum = rlpDecode.vbegin as number;
-        sn.chains[0].endBlockNum = rlpDecode.vend as number;
-        sn.chains[1].beginBlockNum = rlpDecode.ebegin as number;
-        sn.chains[1].endBlockNum = rlpDecode.eend as number;
+        sn.merkleRoot = String(event.returnValues['_root']);
+        sn.chains[0].beginBlockNum = Number(rlpDecode.vbegin);
+        sn.chains[0].endBlockNum = Number(rlpDecode.vend);
+        sn.chains[1].beginBlockNum = Number(rlpDecode.ebegin);
+        sn.chains[1].endBlockNum =Number(rlpDecode.eend);
         return sn;
     }
 

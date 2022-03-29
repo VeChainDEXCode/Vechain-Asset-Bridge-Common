@@ -119,7 +119,7 @@ export class EthereumCommon {
                     chainId:this.config.ethereum.chainId as string,
                     blockId:block.hash,
                     blockNum:block.number,
-                    timestamp:block.timestamp as number
+                    timestamp:Number(block.timestamp)
                 });
             }
         } catch (error) {

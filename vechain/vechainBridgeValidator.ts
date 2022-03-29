@@ -39,8 +39,8 @@ export class VeChainBridgeValidatorReader {
                 executed:call.decoded[0][0] != "0" ? true : false,
                 createBlock:Number(call.decoded[0][1]),
                 executblock:Number(call.decoded[0][2]),
-                args:(call.decoded[0][4] as string),
-                signatures:(call.decoded[0][5] as Array<string>)
+                args:String(call.decoded[0][4]),
+                signatures:Array(call.decoded[0][5])
             }
             result.data = p;
         } catch (error) {
@@ -69,10 +69,10 @@ export class VeChainBridgeValidatorReader {
                 for(const ev of events){
                     const evDecode = this.ValidatorChangedEvent.decode(ev.data,ev.topics);
                     const validator:Validator = {
-                        validator:evDecode[0] as string,
-                        activate:evDecode[1] as boolean,
-                        updateBlockNum:ev.meta.blockNumber,
-                        updateBlockId:ev.meta.blockID
+                        validator:String(evDecode[0]),
+                        activate:Boolean(evDecode[1]),
+                        updateBlockNum:Number(ev.meta.blockNumber),
+                        updateBlockId:String(ev.meta.blockID)
                     }
                     result.data.push(validator);
                 }

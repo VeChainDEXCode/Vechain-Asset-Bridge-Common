@@ -103,7 +103,7 @@ export class VeChainBridgeCore implements IBridgeCore {
 
         try {
             const call = await this.bridgeCore.call('rootCount');
-            result.data = call.decoded[0] as number;
+            result.data = Number(call.decoded[0]);
         } catch (error) {
             result.error = error;
         }
@@ -145,9 +145,9 @@ export class VeChainBridgeCore implements IBridgeCore {
                     txid:ev.meta.txID,
                     index:evIndex,
                     timestamp:ev.meta.blockTimestamp,
-                    appid:evDecode[0] as string,
-                    sender:evDecode[1] as string,
-                    hash:evDecode[2] as string
+                    appid:String(evDecode[0]),
+                    sender:String(evDecode[1]),
+                    hash:String(evDecode[2])
                 }
                 result.data.push(hashevent);
                 evIndex++;
@@ -170,21 +170,21 @@ export class VeChainBridgeCore implements IBridgeCore {
 
         try {
             const root = (await this.bridgeCore.call('rootList',index)).decoded[0];
-            if(root != ZeroRoot()){
+            if(root != null && root != ZeroRoot()){
                 const infoDecode = (await this.bridgeCore.call('rootInfo',root));
                 const rlpDecode = this.argsRLP.decode(infoDecode.decoded[1]);
                 result.data = {merkleRoot:root,chains:[
                     {
                         chainName:this.config.vechain.chainName,
                         chainId:this.config.vechain.chainId,
-                        beginBlockNum:rlpDecode.vbegin as number,
-                        endBlockNum:rlpDecode.vend as number
+                        beginBlockNum:Number(rlpDecode.vbegin),
+                        endBlockNum:Number(rlpDecode.vend)
                     },
                     {
                         chainName:this.config.ethereum.chainName,
                         chainId:this.config.ethereum.chainId,
-                        beginBlockNum:rlpDecode.ebegin as number,
-                        endBlockNum:rlpDecode.eend as number
+                        beginBlockNum:Number(rlpDecode.ebegin),
+                        endBlockNum:Number(rlpDecode.eend)
                     }]}
             }
         } catch (error) {
@@ -207,19 +207,19 @@ export class VeChainBridgeCore implements IBridgeCore {
             const infoDecode = (await this.bridgeCore.call('rootInfo',root));
             if(infoDecode.decoded[0] != 0){
                 const rlpDecode = this.argsRLP.decode(infoDecode.decoded[1]);
-                result.data.index = infoDecode.decoded[0] as number;
+                result.data.index = Number(infoDecode.decoded[0]);
                 result.data.sn = {merkleRoot:root,chains:[
                     {
                         chainName:this.config.vechain.chainName,
                         chainId:this.config.vechain.chainId,
-                        beginBlockNum:rlpDecode.vbegin as number,
-                        endBlockNum:rlpDecode.vend as number
+                        beginBlockNum:Number(rlpDecode.vbegin),
+                        endBlockNum:Number(rlpDecode.vend)
                     },
                     {
                         chainName:this.config.ethereum.chainName,
                         chainId:this.config.ethereum.chainId,
-                        beginBlockNum:rlpDecode.ebegin as number,
-                        endBlockNum:rlpDecode.eend as number
+                        beginBlockNum:Number(rlpDecode.ebegin),
+                        endBlockNum:Number(rlpDecode.eend)
                     }]}
             }
         } catch (error) {
@@ -253,11 +253,11 @@ export class VeChainBridgeCore implements IBridgeCore {
 
         const decode = this.updateMerkleRootEvent.decode(event.data,event.topics);
         const rlpDecode =  this.argsRLP.decode(decode[1]);
-        sn.merkleRoot = decode[0] as string;
-        sn.chains[0].beginBlockNum = rlpDecode.vbegin as number;
-        sn.chains[0].endBlockNum = rlpDecode.vend as number;
-        sn.chains[1].beginBlockNum = rlpDecode.ebegin as number;
-        sn.chains[1].endBlockNum = rlpDecode.eend as number;
+        sn.merkleRoot = String(decode[0]);
+        sn.chains[0].beginBlockNum = Number(rlpDecode.vbegin);
+        sn.chains[0].endBlockNum = Number(rlpDecode.vend);
+        sn.chains[1].beginBlockNum = Number(rlpDecode.ebegin);
+        sn.chains[1].endBlockNum = Number(rlpDecode.eend);
         return sn;
     }
 
