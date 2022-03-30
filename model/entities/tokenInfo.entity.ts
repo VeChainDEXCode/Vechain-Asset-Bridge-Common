@@ -28,6 +28,9 @@ export class TokenEntity{
     @Column({name:"tokentype",unsigned: true})
     public tokenType!:number;
 
+    @Column({name:'nativecoin'})
+    public nativeCoin!:boolean;
+
     @Column({name:"targettokenaddr"})
     public targetTokenAddr!:string;
 
