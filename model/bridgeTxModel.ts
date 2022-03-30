@@ -34,11 +34,13 @@ export default class BridgeTxModel{
                         entity.type = 1;
                         entity.from = (tx as SwapBridgeTx).from;
                         entity.reward = '0x' + (tx as SwapBridgeTx).reward.toString(16);
+                        entity.amountOut = '0x' + (tx as SwapBridgeTx).amount.toString(16);
                         entity.swapCount = '0x' + (tx as SwapBridgeTx).swapCount.toString(16);
                     } else {
                         entity.type = 2;
-                        entity.from = "";
-                        entity.reward = "0x0";
+                        entity.from = '';
+                        entity.reward = '0x0';
+                        entity.amountOut = '0x0';
                         entity.swapCount = "0x0";
                     }
                     await trans.save(entity);
@@ -83,6 +85,7 @@ export default class BridgeTxModel{
                 if(tx.type == BridgeTxType.swap){
                     (tx as SwapBridgeTx).from = data.from;
                     (tx as SwapBridgeTx).reward = BigInt(data.reward);
+                    (tx as SwapBridgeTx).amountOut = BigInt(data.amountOut);
                     (tx as SwapBridgeTx).swapCount = BigInt(data.swapCount);
                 }
                 result.data = tx;
@@ -179,7 +182,7 @@ export default class BridgeTxModel{
                     type:BridgeTxType.swap,
                     from:item.from,
                     reward:BigInt(item.reward),
-                    amountOut:BigInt(0),
+                    amountOut:BigInt(item.amountOut),
                     swapCount:BigInt(item.swapCount),
                     swapTxHash:item.swapTxHash
                     };
@@ -228,6 +231,7 @@ export default class BridgeTxModel{
                     if(bridgeTx.type == BridgeTxType.swap){
                         (bridgeTx as SwapBridgeTx).from = item.from;
                         (bridgeTx as SwapBridgeTx).reward = BigInt(item.reward);
+                        (bridgeTx as SwapBridgeTx).amountOut = BigInt(item.amountOut);
                         (bridgeTx as SwapBridgeTx).swapCount = BigInt(item.swapCount);
                         (bridgeTx as SwapBridgeTx).amountOut = amountOut(bridgeTx as SwapBridgeTx);
                     }

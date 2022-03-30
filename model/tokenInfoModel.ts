@@ -25,7 +25,7 @@ export default class TokenInfoModel {
                     decimals:entity.decimals,
                     tokenAddr:entity.tokenAddr,
                     nativeCoin:false,
-                    tokenType:entity.tokenType,
+                    tokenType:Number(entity.tokenType),
                     targetTokenAddr:entity.targetTokenAddr,
                     targetChainName:entity.targetChainName,
                     targetChainId:entity.targetChainId,

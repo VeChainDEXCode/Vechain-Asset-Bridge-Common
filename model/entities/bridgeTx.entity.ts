@@ -54,6 +54,9 @@ export class BridgeTxEntity{
     @Column({name:'reward',nullable:false})
     public reward!:string;
 
+    @Column({name:'amountout',nullable:false})
+    public amountOut!:string;
+
     @Column({name:'swapcount',nullable:false})
     public swapCount!:string;
 }
