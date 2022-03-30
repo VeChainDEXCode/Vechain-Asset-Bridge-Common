@@ -97,6 +97,46 @@ export default class BridgeTxModel{
         return result;
     }
 
+    public async getBridgeTxById(bridgetxid:string):Promise<ActionData<BaseBridgeTx>>{
+        let result = new ActionData<BaseBridgeTx>();
+
+        try {
+            let data = await getRepository(BridgeTxEntity)
+            .findOne({
+                bridgeTxId:Equal(bridgetxid)
+            });
+
+            if(data != undefined){
+                let tx:BaseBridgeTx = {
+                    bridgeTxId:data.bridgeTxId,
+                    chainName:data.chainName,
+                    chainId:data.chainId,
+                    blockNumber:data.blockNum,
+                    blockId:data.blockId,
+                    txid:data.txid,
+                    index:data.index,
+                    token:data.token,
+                    amount:BigInt(data.amount),
+                    timestamp:data.timestamp,
+                    recipient:data.recipient,
+                    type:data.type,
+                    swapTxHash:data.swapTxHash
+                }
+                if(tx.type == BridgeTxType.swap){
+                    (tx as SwapBridgeTx).from = data.from;
+                    (tx as SwapBridgeTx).reward = BigInt(data.reward);
+                    (tx as SwapBridgeTx).amountOut = BigInt(data.amountOut);
+                    (tx as SwapBridgeTx).swapCount = BigInt(data.swapCount);
+                }
+                result.data = tx;
+            }
+        } catch (error) {
+            result.error = error;
+        }
+
+        return result;
+    }
+
     public async getClaimTxs(chainName:string,chainId:string,account:string,token?:string,begin?:number,end?:number,limit:number = 50,offset:number = 0):Promise<ActionData<ClaimBridgeTx[]>>{
         let result = new ActionData<ClaimBridgeTx[]>();
         result.data = new Array();

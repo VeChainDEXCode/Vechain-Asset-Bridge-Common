@@ -123,7 +123,7 @@ export class SnapshootModel {
                 for(const ev of events){
                     let entity = new HashEventEntity();
                     entity.eventId = hashEventId(ev);
-                    entity.chainName = ev.chainId,
+                    entity.chainName = ev.chainName,
                     entity.chainId = ev.chainId,
                     entity.blockNumber = ev.blockNumber,
                     entity.blockId = ev.blockId,
