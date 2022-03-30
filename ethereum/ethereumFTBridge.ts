@@ -118,7 +118,7 @@ export class EthereumFTBridge {
                         tokenAddr:tokenAddr,
                         nativeCoin:Boolean(ev.returnValues._native),
                         tokenType:Number(ev.returnValues._type),
-                        targetTokenAddr:String(ev.returnValues._token),
+                        targetTokenAddr:String(ev.returnValues._ttoken),
                         targetChainName:this.config.vechain.chainName,
                         targetChainId:this.config.vechain.chainId,
                         begin:Number(ev.returnValues._begin),
