@@ -152,8 +152,8 @@ export class SnapshootModel {
             .where("chainname = :name",{name:chainname})
             .andWhere("chainid = :id",{id:chainid});
 
-            query = range.blockNum != undefined && range.blockNum.from != undefined ? query.andWhere("blocknumber >= :num",{num:range.blockNum.from}) : query;
-            query = range.blockNum != undefined && range.blockNum.to != undefined ? query.andWhere("blocknumber <= :num",{num:range.blockNum.to}) : query;
+            query = range.blockNum != undefined && range.blockNum.from != undefined ? query.andWhere(`blocknumber >= ${range.blockNum.from}`) : query;
+            query = range.blockNum != undefined && range.blockNum.to != undefined ? query.andWhere(`blocknumber <= ${range.blockNum.to}`) : query;
             query = range.blockids != undefined && range.blockids.length > 0 ? query.andWhere("blockid IN (:list)",{list:range.blockids}) : query;
 
             const datas = await query.getMany();
