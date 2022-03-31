@@ -40,7 +40,7 @@ export class VeChainBridgeValidatorReader {
                 createBlock:Number(call.decoded[0][1]),
                 executblock:Number(call.decoded[0][2]),
                 args:String(call.decoded[0][4]),
-                signatures:Array(call.decoded[0][5])
+                signatures:call.decoded[0][5]
             }
             result.data = p;
         } catch (error) {
