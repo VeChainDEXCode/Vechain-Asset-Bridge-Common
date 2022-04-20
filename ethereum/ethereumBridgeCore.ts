@@ -122,8 +122,8 @@ export class EthereumBridgeCore implements IBridgeCore {
                         blockCache.set(block.number,block);
                     }
                     const submithash:HashEvent = {
-                        chainName:this.config.vechain.chainName,
-                        chainId:this.config.vechain.chainId,
+                        chainName:this.config.ethereum.chainName,
+                        chainId:this.config.ethereum.chainId,
                         blockNumber:ev.blockNumber,
                         blockId:ev.blockHash,
                         txid:ev.transactionHash,
