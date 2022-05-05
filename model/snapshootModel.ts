@@ -1,8 +1,7 @@
-import { getConnection, getManager, getRepository, SelectQueryBuilder } from "typeorm";
+import { DataSource} from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BlockRange } from "../utils/types/blockRange";
 import { BridgeSnapshoot, ZeroRoot } from "../utils/types/bridgeSnapshoot";
-import { BaseBridgeTx } from "../utils/types/bridgeTx";
 import { HashEvent, hashEventId } from "../utils/types/hashEvent";
 import { HashEventEntity } from "./entities/hashEvent.entity";
 import { SnapshootEntity } from "./entities/snapshoot.entity";
@@ -12,6 +11,7 @@ export class SnapshootModel {
     constructor(env:any){
         this.env = env;
         this.config = env.config;
+        this.dataSource = env.dataSource;
     }
 
     public async getLastSnapshoot():Promise<ActionData<BridgeSnapshoot>>{
@@ -25,7 +25,7 @@ export class SnapshootModel {
         }
 
         try {
-            let data = await getRepository(SnapshootEntity)
+            let data = await this.dataSource.getRepository(SnapshootEntity)
                 .createQueryBuilder()
                 .orderBy("end_blocknum_0","DESC")
                 .getOne();
@@ -56,10 +56,9 @@ export class SnapshootModel {
         }
 
         try {
-            let data = await getRepository(SnapshootEntity)
+            let data = await this.dataSource.getRepository(SnapshootEntity)
                 .findOne({where:{
-                    merkleRoot:root,
-                    valid:true
+                    merkleRoot:root
                 }});
                 if(data != undefined){
                     result.data = {
@@ -81,7 +80,7 @@ export class SnapshootModel {
         let result = new ActionResult();
 
         try {
-            await getConnection()
+            await this.dataSource
             .createQueryBuilder()
             .delete()
             .from(SnapshootEntity)
@@ -98,7 +97,7 @@ export class SnapshootModel {
         let result = new ActionResult();
 
         try {
-            await getManager().transaction(async trans => {
+            await this.dataSource.transaction(async trans => {
                 for(const sn of sns){
                     let entity = new SnapshootEntity();
                     entity.merkleRoot = sn.merkleRoot;
@@ -147,7 +146,7 @@ export class SnapshootModel {
         result.data = new Array();
 
         try {
-            let query = getRepository(HashEventEntity)
+            let query = this.dataSource.getRepository(HashEventEntity)
             .createQueryBuilder()
             .where("chainname = :name",{name:chainname})
             .andWhere("chainid = :id",{id:chainid});
@@ -182,7 +181,7 @@ export class SnapshootModel {
         let result = new ActionResult();
 
         try {
-            await getManager().transaction(async trans => {
+            await this.dataSource.transaction(async trans => {
                 let query = trans.createQueryBuilder()
                     .delete()
                     .from(SnapshootEntity);
@@ -218,4 +217,5 @@ export class SnapshootModel {
 
     private env:any;
     private config:any;
+    private dataSource:DataSource;
 }

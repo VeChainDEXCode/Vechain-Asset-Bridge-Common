@@ -1,16 +1,20 @@
-import { getConnection, getManager, getRepository } from "typeorm";
+import { DataSource } from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { Validator } from "../utils/types/validator";
 import { ValidatorEntity } from "./entities/validator.entity";
 
 export default class ValidatorModel {
 
+    constructor(env:any){
+        this.dataSource = env.dataSource;
+    }
+
     public async getValidators():Promise<ActionData<Validator[]>>{
         let result = new ActionData<Validator[]>();
         result.data = new Array<Validator>();
 
         try {
-            let data = await getRepository(ValidatorEntity)
+            let data = await this.dataSource.getRepository(ValidatorEntity)
                 .createQueryBuilder()
                 .where("activate = true")
                 .getMany();
@@ -33,7 +37,7 @@ export default class ValidatorModel {
     public async save(validators:Validator[]):Promise<ActionResult>{
         let result = new ActionResult();
         try {
-            await getManager().transaction(async trans => {
+            await this.dataSource.transaction(async trans => {
                 for(const verifier of validators){
                     let entity = new ValidatorEntity();
                     entity.validator = verifier.validator;
@@ -48,4 +52,6 @@ export default class ValidatorModel {
         }
         return result;
     }
+
+    private dataSource:DataSource;
 }

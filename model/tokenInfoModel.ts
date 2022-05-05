@@ -1,4 +1,4 @@
-import { getManager, getRepository } from "typeorm";
+import { DataSource, getManager, getRepository } from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BlockRange } from "../utils/types/blockRange";
 import { TokenInfo } from "../utils/types/tokenInfo";
@@ -7,12 +7,16 @@ import { TokenEntity } from "./entities/tokenInfo.entity";
 
 export default class TokenInfoModel {
 
+    constructor(env:any){
+        this.dataSource = env.dataSource;
+    }
+
     public async getTokenInfos():Promise<ActionData<TokenInfo[]>>{
         let result = new ActionData<TokenInfo[]>();
         result.data = new Array<TokenInfo>();
 
         try {
-            let data = await getRepository(TokenEntity)
+            let data = await this.dataSource.getRepository(TokenEntity)
                 .createQueryBuilder()
                 .getMany();
             for(const entity of data){
@@ -48,7 +52,7 @@ export default class TokenInfoModel {
     public async save(tokens:TokenInfo[]):Promise<ActionResult>{
         let result = new ActionResult();
         try {
-            await getManager().transaction(async transactionalEntityManager => {
+            await this.dataSource.transaction(async transactionalEntityManager => {
                 for(const token of tokens){
                     let entity = new TokenEntity();
                     entity.tokenid = token.tokenid;
@@ -80,7 +84,7 @@ export default class TokenInfoModel {
     public async removeByBlockRange(chainName:string,chainId:string,range:BlockRange):Promise<ActionResult>{
         let result = new ActionResult();
         try {
-            await getManager().transaction(async trans => {
+            await this.dataSource.transaction(async trans => {
                 let query = trans.createQueryBuilder()
                     .delete()
                     .from(TokenEntity)
@@ -100,4 +104,6 @@ export default class TokenInfoModel {
 
         return result;
     }
+
+    private dataSource:DataSource;
 }

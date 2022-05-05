@@ -1,19 +1,21 @@
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BlockIndex } from "../utils/types/blockIndex";
-import { getConnection, getManager, getRepository } from "typeorm";
+import { DataSource } from "typeorm";
 import { BlockIndexEntity } from "./entities/blockIndex.entity";
 import { keccak256 } from "thor-devkit";
 import { BlockRange } from "../utils/types/blockRange";
 
 export default class BlockIndexModel {
-    constructor(){}
+    constructor(env:any){
+        this.dataSource = env.dataSource;
+    }
 
     public async getBlockByTimestamp(chainname:string,chainid:string,beginTs?:number,endTs?:number,offset?:number,limit?:number):Promise<ActionData<BlockIndex[]>>{
         let result = new ActionData<BlockIndex[]>();
         result.data = new Array();
 
         try {
-            let query = getRepository(BlockIndexEntity)
+            let query = this.dataSource.getRepository(BlockIndexEntity)
             .createQueryBuilder()
             .where("chainname = :name",{name:chainname})
             .andWhere("chainid = :id",{id:chainid})
@@ -44,7 +46,7 @@ export default class BlockIndexModel {
     public async getLatestBlock(chainname:string,chainid:string):Promise<ActionData<BlockIndex>> {
         let result = new ActionData<BlockIndex>();
         try {
-            let query:any = await getRepository(BlockIndexEntity)
+            let query:any = await this.dataSource.getRepository(BlockIndexEntity)
             .createQueryBuilder()
             .where("chainname = :name",{name:chainname})
             .andWhere("chainid = :id",{id:chainid})
@@ -68,7 +70,7 @@ export default class BlockIndexModel {
     public async getBlockByNumber(chainname:string,chainid:string,blocknum:number):Promise<ActionData<BlockIndex>>{
         let result = new ActionData<BlockIndex>();
         try {
-            let query:any = await getRepository(BlockIndexEntity)
+            let query:any = await this.dataSource.getRepository(BlockIndexEntity)
             .createQueryBuilder()
             .where("chainname = :name",{name:chainname})
             .andWhere("chainid = :id",{id:chainid})
@@ -92,7 +94,7 @@ export default class BlockIndexModel {
     public async save(blocks:BlockIndex[]):Promise<ActionResult>{
         let result = new ActionResult();
         try {
-            await getManager().transaction(async trans => {
+            await this.dataSource.transaction(async trans => {
                 for(const block of blocks){
                     let entity = new BlockIndexEntity();
                     entity.indexid = this.pid(block.chainName,block.chainId,block.blockId);
@@ -114,8 +116,7 @@ export default class BlockIndexModel {
         let result = new ActionResult();
 
         try {
-            let query = getConnection()
-            .createQueryBuilder()
+            let query = this.dataSource.createQueryBuilder()
             .delete()
             .from(BlockIndexEntity)
             .where("chainname = :name",{name:chainname})
@@ -142,4 +143,6 @@ export default class BlockIndexModel {
         ])
         return "0x" + keccak256(buff).toString('hex');
     }
+
+    private dataSource:DataSource;
 }

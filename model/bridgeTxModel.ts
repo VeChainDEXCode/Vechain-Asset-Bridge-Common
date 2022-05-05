@@ -1,21 +1,20 @@
-import { Equal, getConnection, getManager, getRepository } from "typeorm";
+import { DataSource, Equal} from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
 import { BlockRange } from "../utils/types/blockRange";
 import { BridgeSnapshoot } from "../utils/types/bridgeSnapshoot";
-import { BaseBridgeTx,SwapBridgeTx,ClaimBridgeTx, bridgeTxId, swapTxHash, BridgeTxType, amountOut } from "../utils/types/bridgeTx";
+import { BaseBridgeTx,SwapBridgeTx,ClaimBridgeTx, bridgeTxId, BridgeTxType, amountOut } from "../utils/types/bridgeTx";
 import { BridgeTxEntity } from "./entities/bridgeTx.entity";
 
 export default class BridgeTxModel{
     constructor(env:any){
-        this.env = env;
-        this.config = env.config;
+        this.dataSource = env.dataSource;
     }
 
     public async saveBridgeTxs(txs:BaseBridgeTx[]):Promise<ActionResult>{
         let result = new ActionResult();
 
         try {
-            await getManager().transaction(async trans => {
+            await this.dataSource.transaction(async trans => {
                 for(const tx of txs){
                     let entity = new BridgeTxEntity();
                     entity.bridgeTxId = bridgeTxId(tx);
@@ -56,15 +55,16 @@ export default class BridgeTxModel{
         let result = new ActionData<BaseBridgeTx>();
 
         try {
-            let data = await getRepository(BridgeTxEntity)
+            let data = await this.dataSource.getRepository(BridgeTxEntity)
             .findOne({
-                chainName:Equal(chainName),
-                chainId:Equal(chainId)
-            },{
+                where:{
+                    chainName:Equal(chainName),
+                    chainId:Equal(chainId)
+                },
                 order:{
                     timestamp:"DESC"
                 }
-            });
+            })
 
             if(data != undefined){
                 let tx:BaseBridgeTx = {
@@ -101,9 +101,11 @@ export default class BridgeTxModel{
         let result = new ActionData<BaseBridgeTx>();
 
         try {
-            let data = await getRepository(BridgeTxEntity)
+            let data = await this.dataSource.getRepository(BridgeTxEntity)
             .findOne({
-                bridgeTxId:Equal(bridgetxid)
+                where:{
+                    bridgeTxId:Equal(bridgetxid)
+                }
             });
 
             if(data != undefined){
@@ -142,7 +144,7 @@ export default class BridgeTxModel{
         result.data = new Array();
 
         try {
-            let query = getRepository(BridgeTxEntity)
+            let query = this.dataSource.getRepository(BridgeTxEntity)
             .createQueryBuilder()
             .where("chainname = :name",{name:chainName})
             .andWhere("chainid = :id",{id:chainId})
@@ -189,7 +191,7 @@ export default class BridgeTxModel{
         result.data = new Array();
 
         try {
-            let query = getRepository(BridgeTxEntity)
+            let query = this.dataSource.getRepository(BridgeTxEntity)
             .createQueryBuilder()
             .where("chainname = :name",{name:chainName})
             .andWhere("chainid = :id",{id:chainId})
@@ -242,7 +244,7 @@ export default class BridgeTxModel{
 
         try {
             for(const chain of sn.chains){
-                let query = getRepository(BridgeTxEntity)
+                let query = this.dataSource.getRepository(BridgeTxEntity)
                 .createQueryBuilder()
                 .where("chainname = :name",{name:chain.chainName})
                 .andWhere("chainid = :id",{id:chain.chainId})
@@ -288,7 +290,7 @@ export default class BridgeTxModel{
         let result = new ActionResult();
 
         try {
-            await getManager().transaction(async trans => {
+            await this.dataSource.transaction(async trans => {
                 let query = trans.createQueryBuilder()
                     .delete()
                     .from(BridgeTxEntity)
@@ -309,6 +311,5 @@ export default class BridgeTxModel{
         return result;
     }
 
-    private env:any;
-    private config:any;
+    private dataSource:DataSource;
 }
