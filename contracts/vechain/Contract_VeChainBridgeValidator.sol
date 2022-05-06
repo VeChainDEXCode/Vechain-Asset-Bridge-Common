@@ -14,9 +14,7 @@ contract BridgeValidatorControl {
     address public governance;
     address public bridge;
     
-    
-    uint16 public proposalExp = 360;
-    uint16 public proposalSubmitExp = 30;
+    uint32 public proposalSubmitExp = 30;
 
     uint8 public validatorCount;
     mapping(address => bool) public validators;
@@ -25,8 +23,7 @@ contract BridgeValidatorControl {
     event ValidatorChanged(address indexed _validator, bool indexed _status);
     event GovernanceUpdate(address indexed _prev, address indexed _new);
     event BridgeUpdate(address indexed _prev,address indexed _new);
-    event ProposalExpChanged(uint16 indexed _prev,uint16 indexed _value);
-    event ProposalSubmitExpChanged(uint16 indexed _prev,uint16 indexed _value);
+    event ProposalSubmitExpChanged(uint32 indexed _prev,uint32 indexed _value);
 
     function setMaster(address _new) external onlyMaster {
         emit MasterChanged(master, _new);
@@ -61,12 +58,7 @@ contract BridgeValidatorControl {
         emit ValidatorChanged(_old,false);
     }
 
-    function setProposalExp(uint8 _new) external onlyGovernance {
-        emit ProposalExpChanged(proposalExp,_new);
-        proposalExp = _new;
-    }
-
-    function setProposalSubmitExp(uint8 _new) external onlyGovernance {
+    function setProposalSubmitExp(uint32 _new) external onlyGovernance {
         emit ProposalSubmitExpChanged(proposalSubmitExp,_new);
         proposalSubmitExp = _new;
     }
@@ -127,11 +119,6 @@ contract VeChainBridgeValidator is BridgeValidatorControl {
             merkleRootProposals[khash] = _new;
         }
         Proposal storage prop = merkleRootProposals[khash];
-
-        require(
-            block.number - prop.createBlock <= proposalExp,
-            "the proposal had expired"
-        );
 
         require(
             prop.executed == false || (prop.executed == true && block.number - prop.executblock <= proposalSubmitExp),
