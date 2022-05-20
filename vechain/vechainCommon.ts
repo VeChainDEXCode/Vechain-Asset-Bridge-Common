@@ -1,5 +1,6 @@
 import { Framework } from "@vechain/connex-framework";
-import { ActionData } from "./utils/components/actionResult";
+import { ActionData, ActionResult } from "../utils/components/actionResult";
+import { BlockIndex } from "../utils/types/blockIndex";
 
 export class VeChainCommon {
     constructor(env:any){
@@ -102,8 +103,47 @@ export class VeChainCommon {
         }
         return result;
     }
+
+    public async getBlockIndex(begin:number,end:number):Promise<ActionData<BlockIndex[]>> {
+        let result = new ActionData<BlockIndex[]>();
+        result.data = new Array();
+
+        try {
+            for(let index = begin; index <= end;index++){
+                const block = await this.connex.thor.block(index).get();
+                if(block == null){
+                    break;
+                }
+                result.data.push({
+                    chainName:String(this.config.vechain.chainName),
+                    chainId:String(this.config.vechain.chainId),
+                    blockId:block.id,
+                    blockNum:block.number,
+                    timestamp:block.timestamp
+                });
+            }
+        } catch (error) {
+            result.error = error; 
+        }
+        return result;
+    }
     
     private env:any;
     private config:any;
     private connex:Framework;
+}
+
+export async function getAllEvents(filter:Connex.Thor.Filter<'event'>):Promise<Connex.Thor.Filter.Row<'event'>[]>{
+    let result = new Array<Connex.Thor.Filter.Row<'event'>>();
+    let offset = 0;
+    while(true){
+        const events = await filter.apply(offset,200);
+        result = result.concat(events);
+        if(events.length == 200){
+            offset = offset + 200;
+            continue;
+        }
+        break;
+    }
+    return result;
 }

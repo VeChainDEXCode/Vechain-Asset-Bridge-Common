@@ -14,12 +14,22 @@ contract BridgeWrappedToken is ITokenExtension{
     mapping (address => mapping (address => uint))  public override allowance;
 
     address public bridge;
+    address public master;
 
     constructor(string memory _name,string memory _symbol,uint8 _decimals,address _bridge) {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
         bridge = _bridge;
+        master = msg.sender;
+    }
+
+    function setBridge(address _bridge) external onlyMaster {
+        bridge = _bridge;
+    }
+
+    function setMaster(address _new) external onlyMaster {
+        master = _new;
     }
 
     function transfer(address _to, uint256 _amount) external override returns(bool){
@@ -72,4 +82,10 @@ contract BridgeWrappedToken is ITokenExtension{
         require(msg.sender == bridge, "permission denied");
         _;
     }
+
+    modifier onlyMaster() {
+        require(msg.sender == master, "permission denied");
+        _;
+    }
+    
 }

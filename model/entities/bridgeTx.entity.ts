@@ -1,73 +1,62 @@
-import { keccak256 } from "thor-devkit";
 import { Entity, PrimaryColumn, Column, Index } from "typeorm";
 
-@Entity("bridgeTx")
+@Entity('bridgeTx')
 export class BridgeTxEntity{
 
-    @PrimaryColumn({name:"bridgetxid"})
-    public bridgetxid!:string;
+    @PrimaryColumn({name:'bridgetxid'})
+    public bridgeTxId!:string;
 
     @Index()
-    @Column({name:"chainname"})
+    @Column({name:'swaptxhash'})
+    public swapTxHash!:string;
+
+    @Index()
+    @Column({name:'chainname'})
     public chainName!:string;
 
     @Index()
-    @Column({name:"chainid"})
+    @Column({name:'chainid'})
     public chainId!:string;
 
     @Index()
-    @Column({name:"blocknumber"})
-    public blockNumber!:number;
+    @Column({name:'blocknum',unsigned: true})
+    public blockNum!:number;
 
     @Index()
-    @Column({name:"blockid"})
+    @Column({name:'blockid'})
     public blockId!:string;
 
-    @Column({name:"txid"})
+    @Column({name:'txid'})
     public txid!:string;
 
-    @Column({name:"clauseindex"})
-    public clauseIndex!:number;
-
-    @Column({name:"index"})
+    @Column({name:'index',unsigned: true})
     public index!:number;
 
     @Index()
-    @Column({name:"account"})
-    public account!:string;
-
-    @Index()
-    @Column({name:"token"})
+    @Column({name:'token'})
     public token!:string;
 
-    @Column({name:"amount"})
+    @Column({name:'amount'})
     public amount!:string;
 
-    @Column({name:"reward"})
-    public reward!:string;
-
-    @Column({name:"timestamp"})
+    @Column({name:'timestamp',unsigned: true})
     public timestamp!:number;
 
-    @Column({name:"type"})
-    @Index()
-    public type!:number;
+    @Column({name:'recipient'})
+    public recipient!:string;
 
-    @Column({name:"valid"})
-    @Index()
-    public valid!:boolean;
-}
+    @Column({name:'type',unsigned: true})
+    public type!:1|2;
 
-export function bridgeTxId(chainName:string,chainId:string,blocknum:number,txid:string,clauseIndex:number,index:number,account:string,token:string):string {
-    let encode = Buffer.concat([
-        Buffer.from(chainName),
-        Buffer.from(chainId),
-        Buffer.from(blocknum.toString()),
-        Buffer.from(txid),
-        Buffer.from(clauseIndex.toString()),
-        Buffer.from(index.toString()),
-        Buffer.from(account.substring(2),'hex'),
-        Buffer.from(token.substring(2),'hex'),
-    ]);
-    return '0x' + keccak256(encode).toString('hex');
+    @Column({name:'from',nullable:true})
+    public from!:string;
+
+    @Column({name:'reward',nullable:false})
+    public reward!:string;
+
+    @Column({name:'amountout',nullable:false})
+    public amountOut!:string;
+
+    @Column({name:'swapcount',nullable:false})
+    public swapCount!:string;
 }

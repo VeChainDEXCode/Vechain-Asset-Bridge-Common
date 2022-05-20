@@ -1,7 +1,8 @@
 export type Proposal = {
-    hash:string;
-    quorum:number;
+    root:string;
+    createBlock:number,
+    executblock:number,
     executed:boolean;
-    value:string;
-    signatures:Array<string>
+    args:any,
+    signatures:string[]
 }

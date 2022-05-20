@@ -34,7 +34,7 @@ export class VIP180Token {
     }
 
     public async allowance(owner:string,spender:string):Promise<BigInt>{
-        const call = await this.contract.call("balanceOf",owner);
+        const call = await this.contract.call("allowance",owner);
         return BigInt(call.decoded[0]);
     }
 

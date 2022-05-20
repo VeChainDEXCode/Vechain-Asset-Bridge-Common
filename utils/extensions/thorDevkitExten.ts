@@ -44,4 +44,8 @@ export module ThorDevKitEx{
     export function Bytes32ToAddress(data:string):string{
         return '0x' + BigInt(data).toString(16).padStart(40,'0');
     }
+
+    export function ZeroAddress():string {
+        return "0x0000000000000000000000000000000000000000";
+    }
 }

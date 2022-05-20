@@ -1,9 +1,9 @@
-import { getConnection, getManager, getRepository, SelectQueryBuilder } from "typeorm";
+import { DataSource} from "typeorm";
 import { ActionData, ActionResult } from "../utils/components/actionResult";
+import { BlockRange } from "../utils/types/blockRange";
 import { BridgeSnapshoot, ZeroRoot } from "../utils/types/bridgeSnapshoot";
-import { BridgeTx } from "../utils/types/bridgeTx";
-import { bridgeTxId } from "./entities/bridgeTx.entity";
-import { PackingLogEntity } from "./entities/packingLog.entity";
+import { HashEvent, hashEventId } from "../utils/types/hashEvent";
+import { HashEventEntity } from "./entities/hashEvent.entity";
 import { SnapshootEntity } from "./entities/snapshoot.entity";
 
 export class SnapshootModel {
@@ -11,32 +11,30 @@ export class SnapshootModel {
     constructor(env:any){
         this.env = env;
         this.config = env.config;
+        this.dataSource = env.dataSource;
     }
 
     public async getLastSnapshoot():Promise<ActionData<BridgeSnapshoot>>{
         let result = new ActionData<BridgeSnapshoot>();
         result.data = {
-            parentMerkleRoot:ZeroRoot(),
             merkleRoot:ZeroRoot(),
             chains:[
-                {chainName:this.config.vechain.chainName,chainId:this.config.vechain.chainId,lockedBlockNum:this.config.vechain.startBlockNum,beginBlockNum:this.config.vechain.startBlockNum,endBlockNum:this.config.vechain.startBlockNum},
-                {chainName:this.config.ethereum.chainName,chainId:this.config.ethereum.chainId,lockedBlockNum:this.config.ethereum.startBlockNum,beginBlockNum:this.config.ethereum.startBlockNum,endBlockNum:this.config.ethereum.startBlockNum},
+                {chainName:this.config.vechain.chainName,chainId:this.config.vechain.chainId,beginBlockNum:this.config.vechain.startBlockNum,endBlockNum:this.config.vechain.startBlockNum},
+                {chainName:this.config.ethereum.chainName,chainId:this.config.ethereum.chainId,beginBlockNum:this.config.ethereum.startBlockNum,endBlockNum:this.config.ethereum.startBlockNum},
             ]
         }
 
         try {
-            let data = await getRepository(SnapshootEntity)
+            let data = await this.dataSource.getRepository(SnapshootEntity)
                 .createQueryBuilder()
-                .where("valid = true")
                 .orderBy("end_blocknum_0","DESC")
                 .getOne();
             if(data != undefined){
                 result.data = {
-                    parentMerkleRoot:data.parentMerkleRoot,
                     merkleRoot:data.merkleRoot,
                     chains:[
-                        {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,lockedBlockNum:data.lockedBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
-                        {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,lockedBlockNum:data.lockedBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
+                        {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
+                        {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
                     ]
                 }
             }
@@ -50,37 +48,24 @@ export class SnapshootModel {
     public async getSnapshootByRoot(root:string):Promise<ActionData<BridgeSnapshoot>>{
         let result = new ActionData<BridgeSnapshoot>();
         result.data = {
-            parentMerkleRoot:ZeroRoot(),
             merkleRoot:ZeroRoot(),
             chains:[
-                {
-                    chainName:this.config.vechain.chainName,
-                    chainId:this.config.vechain.chainId,
-                    lockedBlockNum:this.config.vechain.startBlockNum,
-                    beginBlockNum:this.config.vechain.startBlockNum,
-                    endBlockNum:this.config.vechain.startBlockNum},
-                {
-                    chainName:this.config.ethereum.chainName,
-                    chainId:this.config.ethereum.chainId,
-                    lockedBlockNum:this.config.ethereum.startBlockNum,
-                    beginBlockNum:this.config.ethereum.startBlockNum,
-                    endBlockNum:this.config.ethereum.startBlockNum},
+                { chainName:this.config.vechain.chainName,chainId:this.config.vechain.chainId,beginBlockNum:this.config.vechain.startBlockNum,endBlockNum:this.config.vechain.startBlockNum },
+                { chainName:this.config.ethereum.chainName,chainId:this.config.ethereum.chainId,beginBlockNum:this.config.ethereum.startBlockNum,endBlockNum:this.config.ethereum.startBlockNum },
             ]
         }
 
         try {
-            let data = await getRepository(SnapshootEntity)
+            let data = await this.dataSource.getRepository(SnapshootEntity)
                 .findOne({where:{
-                    merkleRoot:root,
-                    valid:true
+                    merkleRoot:root
                 }});
                 if(data != undefined){
                     result.data = {
-                        parentMerkleRoot:data.parentMerkleRoot,
                         merkleRoot:data.merkleRoot,
                         chains:[
-                            {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,lockedBlockNum:data.lockedBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
-                            {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,lockedBlockNum:data.lockedBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
+                            {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
+                            {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
                         ]
                     }
                 }
@@ -88,94 +73,6 @@ export class SnapshootModel {
             result.error = error;
         }
 
-        return result;
-    }
-
-    public async getSnapshootByParentRoot(parentRoot:string):Promise<ActionData<BridgeSnapshoot>>{
-        let result = new ActionData<BridgeSnapshoot>();
-        result.data = {
-            parentMerkleRoot:ZeroRoot(),
-            merkleRoot:ZeroRoot(),
-            chains:[
-                {
-                    chainName:this.config.vechain.chainName,
-                    chainId:this.config.vechain.chainId,
-                    lockedBlockNum:this.config.vechain.startBlockNum,
-                    beginBlockNum:this.config.vechain.startBlockNum,
-                    endBlockNum:this.config.vechain.startBlockNum},
-                {
-                    chainName:this.config.ethereum.chainName,
-                    chainId:this.config.ethereum.chainId,
-                    lockedBlockNum:this.config.ethereum.startBlockNum,
-                    beginBlockNum:this.config.ethereum.startBlockNum,
-                    endBlockNum:this.config.ethereum.startBlockNum},
-            ]
-        }
-
-        try {
-            let data = await getRepository(SnapshootEntity)
-                .findOne({where:{
-                    parentMerkleRoot:parentRoot,
-                    valid:true
-                }});
-                if(data != undefined){
-                    result.data = {
-                        parentMerkleRoot:data.parentMerkleRoot,
-                        merkleRoot:data.merkleRoot,
-                        chains:[
-                            {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,lockedBlockNum:data.lockedBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
-                            {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,lockedBlockNum:data.lockedBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
-                        ]
-                    }
-                }
-        } catch (error) {
-            result.error = error;
-        }
-
-        return result;
-    }
-
-    public async getSnapshootByClaimTx(claimtx:BridgeTx,limit?:number,offset?:number):Promise<ActionData<BridgeSnapshoot[]>>{
-        let result = new ActionData<BridgeSnapshoot[]>();
-        result.data = new Array();
-
-        try {
-            let query!:SelectQueryBuilder<SnapshootEntity>;
-            if(claimtx.chainName == this.config.vechain.chainName && claimtx.chainId == this.config.vechain.chainId){
-                query = getRepository(SnapshootEntity)
-                    .createQueryBuilder()
-                    .where("chainname_0 = :chainname",{chainname:claimtx.chainName})
-                    .andWhere("chainid_0 = :chainid", {chainid:claimtx.chainId})
-                    .andWhere("end_blocknum_0 <= :blocknum", {blocknum:claimtx.blockNumber})
-                    .andWhere("valid = :invalid",{invalid:true})
-                    .orderBy("end_blocknum_0","DESC")
-                    .limit(limit)
-                    .offset(offset)
-            } else if(claimtx.chainName == this.config.ethereum.chainName && claimtx.chainId == this.config.ethereum.chainId){
-                query = getRepository(SnapshootEntity)
-                    .createQueryBuilder()
-                    .where("chainname_1 = :chainname",{chainname:claimtx.chainName})
-                    .andWhere("chainid_1 = :chainid", {chainid:claimtx.chainId})
-                    .andWhere("end_blocknum_1 <= :blocknum", {blocknum:claimtx.blockNumber})
-                    .andWhere("valid = :invalid",{invalid:true})
-                    .orderBy("end_blocknum_1","DESC")
-                    .limit(limit)
-                    .offset(offset)
-            }
-            let datas = await query.getMany();
-            for(const data of datas){
-                let sn:BridgeSnapshoot = {
-                    parentMerkleRoot:data.parentMerkleRoot,
-                    merkleRoot:data.merkleRoot,
-                    chains:[
-                        {chainName:data.chainName_0 || "",chainId:data.chainId_0 || "",beginBlockNum:data.beginBlockNum_0 || 0,lockedBlockNum:data.lockedBlockNum_0 || 0,endBlockNum:data.endBlockNum_0 || 0},
-                        {chainName:data.chainName_1 || "",chainId:data.chainId_1 || "",beginBlockNum:data.beginBlockNum_1 || 0,lockedBlockNum:data.lockedBlockNum_1 || 0,endBlockNum:data.endBlockNum_1 || 0}
-                    ]}
-                result.data.push(sn);
-            }
-        } catch (error) {
-            result.error = error;
-        }
         return result;
     }
 
@@ -183,7 +80,7 @@ export class SnapshootModel {
         let result = new ActionResult();
 
         try {
-            await getConnection()
+            await this.dataSource
             .createQueryBuilder()
             .delete()
             .from(SnapshootEntity)
@@ -196,22 +93,20 @@ export class SnapshootModel {
         return result;
     }
 
-    public async save(sns:BridgeSnapshoot[]):Promise<ActionResult>{
+    public async save(sns:BridgeSnapshoot[],events:HashEvent[]):Promise<ActionResult>{
         let result = new ActionResult();
 
         try {
-            await getManager().transaction(async transactionalEntityManager => {
+            await this.dataSource.transaction(async trans => {
                 for(const sn of sns){
                     let entity = new SnapshootEntity();
                     entity.merkleRoot = sn.merkleRoot;
-                    entity.parentMerkleRoot = sn.parentMerkleRoot;
                     const vechainInfo = sn.chains.find(chain => {return chain.chainName == this.config.vechain.chainName && chain.chainId == this.config.vechain.chainId;});
                     const ethereumInfo = sn.chains.find(chain => {return chain.chainName == this.config.ethereum.chainName && chain.chainId == this.config.ethereum.chainId;});
                     if(vechainInfo != undefined){
                         entity.chainName_0 = vechainInfo.chainName as string;
                         entity.chainId_0 = vechainInfo.chainId as string;
                         entity.beginBlockNum_0 = vechainInfo.beginBlockNum;
-                        entity.lockedBlockNum_0 = vechainInfo.lockedBlockNum;
                         entity.endBlockNum_0 = vechainInfo.endBlockNum;
                     }
 
@@ -219,11 +114,25 @@ export class SnapshootModel {
                         entity.chainName_1 = ethereumInfo.chainName as string;
                         entity.chainId_1 = ethereumInfo.chainId as string;
                         entity.beginBlockNum_1 = ethereumInfo.beginBlockNum;
-                        entity.lockedBlockNum_1 = ethereumInfo.lockedBlockNum;
                         entity.endBlockNum_1 = ethereumInfo.endBlockNum;
                     }
-                    entity.valid = true;
-                    await transactionalEntityManager.save(entity);
+                    await trans.save(entity);
+                }
+
+                for(const ev of events){
+                    let entity = new HashEventEntity();
+                    entity.eventId = hashEventId(ev);
+                    entity.chainName = ev.chainName,
+                    entity.chainId = ev.chainId,
+                    entity.blockNumber = ev.blockNumber,
+                    entity.blockId = ev.blockId,
+                    entity.txid = ev.txid,
+                    entity.index = ev.index,
+                    entity.timestamp = ev.timestamp,
+                    entity.appid = ev.appid,
+                    entity.sender = ev.sender,
+                    entity.hash = ev.hash
+                    await trans.save(entity);
                 }
             });
         } catch (error) {
@@ -232,60 +141,35 @@ export class SnapshootModel {
         return result;
     }
 
-    public async savePackingLog(root:string,txs:BridgeTx[]):Promise<ActionResult>{
-        let result = new ActionResult();
-        try {
-            await getManager().transaction(async transactionalEntityManager => {
-                for(const tx of txs){
-                    let entity = new PackingLogEntity();
-                    entity.logid = 0;
-                    entity.merkleRoot = root;
-                    entity.bridgetxid = bridgeTxId(tx.chainName,tx.chainId,tx.blockNumber,tx.txid,tx.clauseIndex,tx.index,tx.account,tx.token);
-                    entity.valid = true;
-                    await transactionalEntityManager.save(entity);
-                }
-            });
-        } catch (error) {
-            result.error = error;
-        }
-        return result;
-    }
-
-    public async deletePackingLog(root:string):Promise<ActionResult>{
-        let result = new ActionResult();
-
-        try {
-            await getConnection()
-            .createQueryBuilder()
-            .delete()
-            .from(PackingLogEntity)
-            .where("merkleRoot = :merkleRoot", { merkleRoot: root })
-            .execute();
-        } catch (error) {
-            result.error = error;
-        }
-
-        return result;
-    }
-
-    public async getLogByBridgeTxId(bridgeTxIds:string[]):Promise<ActionData<Array<{merkleRoot:string,bridgeTxId:string}>>>{
-        let result = new ActionData<Array<{merkleRoot:string,bridgeTxId:string}>>();
+    public async getHashEventsByRange(chainname:string,chainid:string,range:BlockRange):Promise<ActionData<HashEvent[]>>{
+        let result = new ActionData<HashEvent[]>();
         result.data = new Array();
+
         try {
-            let txbatch = new Array<string>();
-            for(let i = 0; i < bridgeTxIds.length; i++){
-                txbatch.push(bridgeTxIds[i]);
-                if(txbatch.length < 10 && i != bridgeTxIds.length + 1){
-                    continue;
-                }
-                const datas = await getRepository(PackingLogEntity)
-                    .createQueryBuilder()
-                    .where("bridgetxid IN (:list)",{list:txbatch})
-                    .getMany();
-                for(const log of datas){
-                    result.data.push({merkleRoot:log.merkleRoot,bridgeTxId:log.bridgetxid});
-                }
-                txbatch = new Array();
+            let query = this.dataSource.getRepository(HashEventEntity)
+            .createQueryBuilder()
+            .where("chainname = :name",{name:chainname})
+            .andWhere("chainid = :id",{id:chainid});
+
+            query = range.blockNum != undefined && range.blockNum.from != undefined ? query.andWhere(`blocknumber >= ${range.blockNum.from}`) : query;
+            query = range.blockNum != undefined && range.blockNum.to != undefined ? query.andWhere(`blocknumber <= ${range.blockNum.to}`) : query;
+            query = range.blockids != undefined && range.blockids.length > 0 ? query.andWhere("blockid IN (:list)",{list:range.blockids}) : query;
+
+            const datas = await query.getMany();
+            for(const item of datas){
+                let event:HashEvent = {
+                    chainName:item.chainName,
+                    chainId:item.chainId,
+                    blockNumber:item.blockNumber,
+                    blockId:item.blockId,
+                    txid:item.txid,
+                    index:item.index,
+                    timestamp:item.timestamp,
+                    appid:item.appid,
+                    sender:item.sender,
+                    hash:item.hash
+                };
+                result.data.push(event);
             }
         } catch (error) {
             result.error = error;
@@ -293,6 +177,45 @@ export class SnapshootModel {
         return result;
     }
 
+    public async removeByBlockRange(chainName:string,chainId:string,range:BlockRange):Promise<ActionResult>{
+        let result = new ActionResult();
+
+        try {
+            await this.dataSource.transaction(async trans => {
+                let query = trans.createQueryBuilder()
+                    .delete()
+                    .from(SnapshootEntity);
+                
+                if(chainName == this.config.vechain.chainName && chainId == this.config.vechain.chainId){
+                    query.where('chainname_0 = :name',{name:chainName})
+                    .andWhere('chainid_0 = :id',{id:chainId});
+                    
+                    if(range.blockNum?.from != undefined || range.blockNum?.to != undefined){
+                        query = range.blockNum?.from != undefined ? query.andWhere('end_blocknum_0 >= :num',{num:range.blockNum.from}) : query;
+                        query = range.blockNum?.to != undefined ? query.andWhere('end_blocknum_0 <= :num',{num:range.blockNum.to}) : query;
+                        await query.execute();
+                    }
+                }
+
+                if(chainName == this.config.ethereum.chainName && chainId == this.config.ethereum.chainId){
+                    query.where('chainname_1 = :name',{name:chainName})
+                    .andWhere('chainid_1 = :id',{id:chainId});
+                    
+                    if(range.blockNum?.from != undefined || range.blockNum?.to != undefined){
+                        query = range.blockNum?.from != undefined ? query.andWhere('end_blocknum_1 >= :num',{num:range.blockNum.from}) : query;
+                        query = range.blockNum?.to != undefined ? query.andWhere('end_blocknum_1 <= :num',{num:range.blockNum.to}) : query;
+                        await query.execute();
+                    }
+                }
+            });
+        } catch (error) {
+            result.error = error;
+        }
+
+        return result;
+    }
+
     private env:any;
     private config:any;
+    private dataSource:DataSource;
 }

@@ -46,8 +46,7 @@ export default class MerkleTree {
                 result.push(cnode.nodeHash);
                 targetNode = parentNode;
             }
-        }
-
+        } 
         return result;
     }
 
