@@ -1,9 +1,7 @@
 import Web3 from "web3";
-import { Contract,EventData } from "web3-eth-contract";
-import path from "path";
-import { compileContract } from "myvetools/dist/utils";
+import { Contract } from "web3-eth-contract";
 import { ActionData } from "../utils/components/actionResult";
-import { BaseBridgeTx, bridgeTxId, BridgeTxType, ClaimBridgeTx, SwapBridgeTx, swapTxHash } from "../utils/types/bridgeTx";
+import { BaseBridgeTx, bridgeTxId, BridgeTxType, ClaimBridgeTx, SwapBridgeTx } from "../utils/types/bridgeTx";
 import { tokenid, TokenInfo } from "../utils/types/tokenInfo";
 import Web3Eth from 'web3-eth';
 import { ERC20Token } from "./erc20Token";

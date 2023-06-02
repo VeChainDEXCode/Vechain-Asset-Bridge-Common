@@ -1,7 +1,5 @@
 import Web3 from "web3";
 import {Contract} from 'web3-eth-contract';
-import path from "path";
-import { compileContract } from "myvetools/dist/utils";
 import { ActionData } from "../utils/components/actionResult";
 import { RLP } from "thor-devkit";
 import { SimpleWallet } from "@vechain/connex-driver";

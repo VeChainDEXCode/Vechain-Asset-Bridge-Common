@@ -1,5 +1,5 @@
 import { Framework } from "@vechain/connex-framework";
-import { ActionData, ActionResult } from "../utils/components/actionResult";
+import { ActionData } from "../utils/components/actionResult";
 import { BlockIndex } from "../utils/types/blockIndex";
 
 export class VeChainCommon {

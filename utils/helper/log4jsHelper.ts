@@ -1,5 +1,5 @@
-import log4js = require('log4js');
-import path = require('path');
+import log4js from 'log4js';
+import path from 'path';
 
 export default class Log4jsHelper{
 

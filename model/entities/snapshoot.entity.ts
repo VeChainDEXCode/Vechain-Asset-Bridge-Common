@@ -1,4 +1,4 @@
-import { Column, Entity, Index, IsNull, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryColumn } from "typeorm";
 
 @Entity("snapshoot")
 @Index(["chainName_0","chainId_0"])

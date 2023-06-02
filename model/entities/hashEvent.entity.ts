@@ -1,4 +1,4 @@
-import { Column, Entity, Index, IsNull, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryColumn } from "typeorm";
 
 @Entity('hashevent')
 @Index(['chainName','chainId','hash'])

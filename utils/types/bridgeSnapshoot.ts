@@ -1,5 +1,3 @@
-import { HashEvent } from "./hashEvent";
-
 export type BridgeSnapshoot = {
     merkleRoot:string;
     chains:Array<ChainInfo>;

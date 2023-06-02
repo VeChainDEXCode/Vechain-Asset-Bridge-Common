@@ -1,8 +1,6 @@
 import { SimpleWallet } from "@vechain/connex-driver";
 import { Framework } from "@vechain/connex-framework";
 import { Contract } from "myvetools";
-import { compileContract } from "myvetools/dist/utils";
-import path from "path";
 import { abi, keccak256, RLP } from "thor-devkit";
 import { ActionData } from "../utils/components/actionResult";
 import { ZeroRoot } from "../utils/types/bridgeSnapshoot";

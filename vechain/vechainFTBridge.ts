@@ -2,7 +2,7 @@ import { Framework } from "@vechain/connex-framework";
 import { Contract } from "myvetools";
 import { abi } from "thor-devkit";
 import { ActionData } from "../utils/components/actionResult";
-import { BaseBridgeTx, bridgeTxId, BridgeTxType, ClaimBridgeTx, SwapBridgeTx, swapTxHash } from "../utils/types/bridgeTx";
+import { BaseBridgeTx, bridgeTxId, BridgeTxType, ClaimBridgeTx, SwapBridgeTx } from "../utils/types/bridgeTx";
 import { tokenid, TokenInfo } from "../utils/types/tokenInfo";
 import { getAllEvents } from "./vechainCommon";
 import { VIP180Token } from "./vip180Token";

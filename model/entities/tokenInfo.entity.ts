@@ -1,5 +1,4 @@
 import { Entity, PrimaryColumn, Column } from "typeorm";
-import { fixedBytes } from "../../utils/extensions/transformers";
 
 @Entity("tokeInfo")
 export class TokenEntity{
