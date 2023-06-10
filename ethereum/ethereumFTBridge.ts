@@ -3,7 +3,7 @@ import { Contract } from "web3-eth-contract";
 import { ActionData } from "../utils/components/actionResult";
 import { BaseBridgeTx, bridgeTxId, BridgeTxType, ClaimBridgeTx, SwapBridgeTx } from "../utils/types/bridgeTx";
 import { tokenid, TokenInfo } from "../utils/types/tokenInfo";
-import Web3Eth from 'web3-eth';
+import { BlockTransactionString } from 'web3-eth';
 import { ERC20Token } from "./erc20Token";
 
 export class EthereumFTBridge {
@@ -19,7 +19,7 @@ export class EthereumFTBridge {
         let result = new ActionData<BaseBridgeTx[]>();
         result.data = new Array();
 
-        let blockCache:Map<string,Web3Eth.BlockTransactionString> = new Map();
+        let blockCache:Map<string,BlockTransactionString> = new Map();
 
         try {
             for(let block = begin;block <= end;){

@@ -5,7 +5,7 @@ import { ActionData } from "../utils/components/actionResult";
 import { BridgeSnapshoot, ZeroRoot } from "../utils/types/bridgeSnapshoot";
 import { HashEvent } from "../utils/types/hashEvent";
 import { RLP } from "thor-devkit";
-import Web3Eth from 'web3-eth';
+import { BlockTransactionString } from 'web3-eth';
 
 export class EthereumBridgeCore implements IBridgeCore {
 
@@ -106,7 +106,7 @@ export class EthereumBridgeCore implements IBridgeCore {
     public async getSubmitEventsByRange(begin: number, end: number): Promise<ActionData<HashEvent[]>> {
         let result = new ActionData<HashEvent[]>();
         result.data = new Array();
-        let blockCache:Map<number,Web3Eth.BlockTransactionString> = new Map();
+        let blockCache:Map<number,BlockTransactionString> = new Map();
 
         try {
             for(let block = begin; block <= end;){
