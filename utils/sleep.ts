@@ -1,5 +1,5 @@
-export const sleep = (ms: number) => {
+export async function sleep(ms:number):Promise<any> {
     return new Promise((resolve) => {
         setTimeout(resolve, ms)
-    })
+    });
 }
