@@ -1,4 +1,4 @@
-export function ObjectSet<T>(obj:T,path:string,value:any):T|any {
+export function ObjectSet(obj:any,path:string,value:any):any {
     var schema = obj;
     var pList = path.split('.');
     var len = pList.length;
