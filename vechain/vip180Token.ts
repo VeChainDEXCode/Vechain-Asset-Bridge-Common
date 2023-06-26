@@ -1,11 +1,14 @@
 import { Framework } from "@vechain/connex-framework";
 import { Contract } from "myvetools";
+import { getReceipt } from "myvetools/dist/connexUtils";
 
 export class VIP180Token {
     private contract:Contract;
+    private agent:Framework;
 
     constructor(addr:string,agent:Framework){
         this.contract = new Contract({abi:this.contractAbi,connex:agent,address:addr});
+        this.agent = agent;
     }
 
     public async name():Promise<string>{
@@ -43,6 +46,57 @@ export class VIP180Token {
         const symbol = await this.symbol();
         const decimals = await this.decimals();
         return {name:name,symbol:symbol,decimals:decimals};
+    }
+
+    public async transfer(amount:BigInt,to:string,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}>{
+        let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
+        const clause = this.contract.send("transfer",0,'0x'+ amount.toString(16),to);
+        const vendor = this.agent.vendor.sign('tx',[clause]);
+        if(origin != undefined && origin.length != 0){
+            vendor.signer(origin);
+        }
+        const txrep = await vendor.request();
+        const receipt = await getReceipt(this.agent,6,txrep.txid);
+        if(receipt != null && !receipt.reverted){
+            result = {txid:txrep.txid.toLowerCase(),logIndex:0,blockid:receipt.meta.blockID.toLowerCase(),blockNum:receipt.meta.blockNumber};
+        } else {
+            throw new Error(`transfer faild, txid ${txrep.txid}.`);
+        }
+        return result;
+    }
+
+    public async transferFrom(from:string,to:string,amount:BigInt,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}>{
+        let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
+        const clause = this.contract.send("transferFrom",0,from,to,'0x'+ amount.toString(16));
+        const vendor = this.agent.vendor.sign('tx',[clause]);
+        if(origin != undefined && origin.length != 0){
+            vendor.signer(origin);
+        }
+        const txrep = await vendor.request();
+        const receipt = await getReceipt(this.agent,6,txrep.txid);
+        if(receipt != null && !receipt.reverted){
+            result = {txid:txrep.txid.toLowerCase(),logIndex:0,blockid:receipt.meta.blockID.toLowerCase(),blockNum:receipt.meta.blockNumber};
+        } else {
+            throw new Error(`transferFrom faild, txid ${txrep.txid}.`);
+        }
+        return result;
+    }
+
+    public async approve(spender:string,amount:BigInt,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}>{
+        let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
+        const clause = this.contract.send("approve",0,spender,'0x'+ amount.toString(16));
+        const vendor = this.agent.vendor.sign('tx',[clause]);
+        if(origin != undefined && origin.length != 0){
+            vendor.signer(origin);
+        }
+        const txrep = await vendor.request();
+        const receipt = await getReceipt(this.agent,6,txrep.txid);
+        if(receipt != null && !receipt.reverted){
+            result = {txid:txrep.txid.toLowerCase(),logIndex:0,blockid:receipt.meta.blockID.toLowerCase(),blockNum:receipt.meta.blockNumber};
+        } else {
+            throw new Error(`approve faild, txid ${txrep.txid}.`);
+        }
+        return result;
     }
 
     private contractAbi = JSON.parse(`[

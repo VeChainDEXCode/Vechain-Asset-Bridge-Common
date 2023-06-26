@@ -3,9 +3,11 @@ import { Contract } from "web3-eth-contract";
 
 export class ERC20Token {
     private contract:Contract;
+    private agent:Web3;
 
     constructor(addr:string,agent:Web3){
         this.contract = new agent.eth.Contract(this.contractAbi,addr);
+        this.agent = agent;
     }
 
     public async name():Promise<string>{
@@ -43,6 +45,75 @@ export class ERC20Token {
         const symbol = await this.symbol();
         const decimals = await this.decimals();
         return {name:name,symbol:symbol,decimals:decimals};
+    }
+
+    public async transfer(amount:BigInt,to:string,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}> {
+        let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
+        const method = this.contract.methods.transfer(amount,to);
+        const ori = origin != undefined && origin.length == 42 ? origin : this.agent.eth.accounts.wallet[0].address;
+        const gasPrice = await this.agent.eth.getGasPrice();
+        const gas = await method.estimateGas({from:ori,value:0});
+        await method.send({from:ori,value:0,gas:gas,gasPrice:gasPrice})
+            .on('receipt',(recp:any) => {
+                result.txid = recp.transactionHash.toLowerCase();
+                result.logIndex = 0;
+                result.blockid = recp.blockHash.toLowerCase();
+                result.blockNum = recp.blockNumber;
+                if(!recp.status){
+                    throw new Error(`transfer faild, txid ${result.txid}.`);
+                }
+            })
+            .on('error,',() => {
+                throw new Error(`transfer faild.`);
+            });
+
+        return result;
+    }
+
+    public async transferFrom(from:string,to:string,amount:BigInt,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}>{
+        let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
+        const method = this.contract.methods.transferFrom(from,amount,to);
+        const ori = origin != undefined && origin.length == 42 ? origin : this.agent.eth.accounts.wallet[0].address;
+        const gasPrice = await this.agent.eth.getGasPrice();
+        const gas = await method.estimateGas({from:ori,value:0});
+        await method.send({from:ori,value:0,gas:gas,gasPrice:gasPrice})
+            .on('receipt',(recp:any) => {
+                result.txid = recp.transactionHash.toLowerCase();
+                result.logIndex = 0;
+                result.blockid = recp.blockHash.toLowerCase();
+                result.blockNum = recp.blockNumber;
+                if(!recp.status){
+                    throw new Error(`transferFrom faild, txid ${result.txid}.`);
+                }
+            })
+            .on('error,',() => {
+                throw new Error(`transferFrom faild.`);
+            });
+
+        return result;
+    }
+
+    public async approve(spender:string,amount:BigInt,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}>{
+        let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
+        const method = this.contract.methods.approve(spender,amount);
+        const ori = origin != undefined && origin.length == 42 ? origin : this.agent.eth.accounts.wallet[0].address;
+        const gasPrice = await this.agent.eth.getGasPrice();
+        const gas = await method.estimateGas({from:ori,value:0});
+        await method.send({from:ori,value:0,gas:gas,gasPrice:gasPrice})
+            .on('receipt',(recp:any) => {
+                result.txid = recp.transactionHash.toLowerCase();
+                result.logIndex = 0;
+                result.blockid = recp.blockHash.toLowerCase();
+                result.blockNum = recp.blockNumber;
+                if(!recp.status){
+                    throw new Error(`approve faild, txid ${result.txid}.`);
+                }
+            })
+            .on('error,',() => {
+                throw new Error(`approve faild.`);
+            });
+
+        return result;
     }
 
     private contractAbi = JSON.parse(`[
