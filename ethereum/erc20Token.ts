@@ -49,7 +49,7 @@ export class ERC20Token {
 
     public async transfer(amount:BigInt,to:string,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}> {
         let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
-        const method = this.contract.methods.transfer(amount,to);
+        const method = this.contract.methods.transfer('0x' + amount.toString(16),to);
         const ori = origin != undefined && origin.length == 42 ? origin : this.agent.eth.accounts.wallet[0].address;
         const gasPrice = await this.agent.eth.getGasPrice();
         const gas = await method.estimateGas({from:ori,value:0});
@@ -72,7 +72,7 @@ export class ERC20Token {
 
     public async transferFrom(from:string,to:string,amount:BigInt,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}>{
         let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
-        const method = this.contract.methods.transferFrom(from,amount,to);
+        const method = this.contract.methods.transferFrom(from,'0x' + amount.toString(16),to);
         const ori = origin != undefined && origin.length == 42 ? origin : this.agent.eth.accounts.wallet[0].address;
         const gasPrice = await this.agent.eth.getGasPrice();
         const gas = await method.estimateGas({from:ori,value:0});
@@ -95,7 +95,7 @@ export class ERC20Token {
 
     public async approve(spender:string,amount:BigInt,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}>{
         let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
-        const method = this.contract.methods.approve(spender,amount);
+        const method = this.contract.methods.approve(spender,'0x' + amount.toString(16));
         const ori = origin != undefined && origin.length == 42 ? origin : this.agent.eth.accounts.wallet[0].address;
         const gasPrice = await this.agent.eth.getGasPrice();
         const gas = await method.estimateGas({from:ori,value:0});
