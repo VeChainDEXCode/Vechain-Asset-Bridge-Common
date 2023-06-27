@@ -50,7 +50,7 @@ export class VIP180Token {
 
     public async transfer(amount:BigInt,to:string,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}>{
         let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
-        const clause = this.contract.send("transfer",0,'0x'+ amount.toString(16),to);
+        const clause = this.contract.send("transfer",0,to,'0x'+ amount.toString(16));
         const vendor = this.agent.vendor.sign('tx',[clause]);
         if(origin != undefined && origin.length != 0){
             vendor.signer(origin);
@@ -67,7 +67,7 @@ export class VIP180Token {
 
     public async transferFrom(from:string,to:string,amount:BigInt,origin?:string):Promise<{txid:string,logIndex:number|string,blockid:string,blockNum:number}>{
         let result = {txid:"",logIndex:0,blockid:"",blockNum:0};
-        const clause = this.contract.send("transferFrom",0,from,to,'0x'+ amount.toString(16));
+        const clause = this.contract.send("transferFrom",0,from,to,'0x'+ amount.toString(16));11
         const vendor = this.agent.vendor.sign('tx',[clause]);
         if(origin != undefined && origin.length != 0){
             vendor.signer(origin);
